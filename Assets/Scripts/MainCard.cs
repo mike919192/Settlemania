@@ -36,6 +36,12 @@ public class MainCard : MonoBehaviour
 
     public Action<MainCard> CardSelected;
 
+    public GameObject CardTitleDisplay;
+    public GameObject CardDescriptionDisplay;
+
+    public string CardTitle;
+    public string CardDescription;
+
     public void OnMouseEnter()
     {
         if (FaceDown == true)
@@ -45,6 +51,24 @@ public class MainCard : MonoBehaviour
                 Card_Back.SetActive(false);
             }
         }
+
+        //cheat mode if commented
+        //if (VisibleToPlayer)
+        //{
+        if (CardTitle != null && CardTitleDisplay != null)
+        { 
+            CardTitleDisplay.SetActive(true);
+            var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+            cardTitleDisplayObject.text = CardTitle;
+        }
+        if (CardDescription != null && CardDescriptionDisplay != null)
+        {
+            CardDescriptionDisplay.SetActive(true);
+            var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+            cardDescriptionDisplayObject.text = CardDescription;
+        }
+        //}
+
     }
 
     public void OnMouseExit()
@@ -55,6 +79,20 @@ public class MainCard : MonoBehaviour
             {
                 Card_Back.SetActive(true);
             }
+        }
+
+        if (CardTitleDisplay != null)
+        {
+            CardTitleDisplay.SetActive(false);
+            var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+            cardTitleDisplayObject.text = "";
+        }
+
+        if (CardDescriptionDisplay != null)
+        {
+            CardDescriptionDisplay.SetActive(false);
+            var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+            cardDescriptionDisplayObject.text = "";
         }
     }
 

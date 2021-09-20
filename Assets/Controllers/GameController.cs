@@ -57,6 +57,9 @@ public class GameController : MonoBehaviour
     GameObject scoreTextAI;
     GameObject scoreTextPlayer;
 
+    GameObject cardTitleDisplay;
+    GameObject cardDescriptionDisplay;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -64,6 +67,11 @@ public class GameController : MonoBehaviour
         scoreTextAI.SetActive(false);
         scoreTextPlayer = GameObject.Find("ScoreTextPlayer");
         scoreTextPlayer.SetActive(false);
+
+        cardTitleDisplay = GameObject.Find("CardTitleDisplay");
+        cardTitleDisplay.SetActive(false);
+        cardDescriptionDisplay = GameObject.Find("CardDescriptionDisplay");
+        cardDescriptionDisplay.SetActive(false);
 
         playerTerrainsGraphics = new List<MainCard>();
         aiTerrainsGraphics = new List<MainCard>();
@@ -145,30 +153,44 @@ public class GameController : MonoBehaviour
             }
 
             SpriteRenderer hand_sr = card.GetComponent<SpriteRenderer>();
+            card.CardTitleDisplay = cardTitleDisplay;
+            card.CardDescriptionDisplay = cardDescriptionDisplay;
 
             if (hand.Cards[i].Type == PlayCard.PlayType.Militia)
             {
                 hand_sr.sprite = MilitiaSmallSprite;
+                card.CardTitle = "Militia";
+                card.CardDescription = "1 point + 1 for each cliff";
             }
             else if (hand.Cards[i].Type == PlayCard.PlayType.TradingPost)
             {
                 hand_sr.sprite = TradingPostSmallSprite;
+                card.CardTitle = "Trading Post";
+                card.CardDescription = "1 point + 1 for each river";
             }
             else if (hand.Cards[i].Type == PlayCard.PlayType.Farm)
             {
                 hand_sr.sprite = FarmSmallSprite;
+                card.CardTitle = "Farm";
+                card.CardDescription = "1 point + 1 for each field";
             }
             else if (hand.Cards[i].Type == PlayCard.PlayType.CityWall)
             {
                 hand_sr.sprite = CityWallsSmallSprite;
+                card.CardTitle = "CityWall";
+                card.CardDescription = "1 point and counters 1 militia";
             }
             else if (hand.Cards[i].Type == PlayCard.PlayType.Bandits)
             {
                 hand_sr.sprite = BanditsSmallSprite;
+                card.CardTitle = "Bandits";
+                card.CardDescription = "1 point and counters 1 trading post";
             }
             else
             {
                 hand_sr.sprite = RaidersSmallSprite;
+                card.CardTitle = "Raiders";
+                card.CardDescription = "1 point and counters 1 farms";
             }
         }
     }
@@ -196,19 +218,24 @@ public class GameController : MonoBehaviour
                 aiTerrainsGraphics.Add(card);
             }
 
+            card.CardTitleDisplay = cardTitleDisplay;
+
             SpriteRenderer terrain_sr = card.GetComponent<SpriteRenderer>();
 
             if (terrain.Cards[i].Type == TerrainCard.TerrainType.Cliff)
             {
                 terrain_sr.sprite = CliffSmallSprite;
+                card.CardTitle = "Cliff";
             }
             else if (terrain.Cards[i].Type == TerrainCard.TerrainType.River)
             {
                 terrain_sr.sprite = RiverSmallSprite;
+                card.CardTitle = "River";
             }
             else
             {
                 terrain_sr.sprite = FieldSmallSprite;
+                card.CardTitle = "Field";
             }
         }
     }
