@@ -53,21 +53,21 @@ public class MainCard : MonoBehaviour
         }
 
         //cheat mode if commented
-        //if (VisibleToPlayer)
-        //{
-        if (CardTitle != null && CardTitleDisplay != null)
-        { 
-            CardTitleDisplay.SetActive(true);
-            var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
-            cardTitleDisplayObject.text = CardTitle;
-        }
-        if (CardDescription != null && CardDescriptionDisplay != null)
+        if (VisibleToPlayer)
         {
-            CardDescriptionDisplay.SetActive(true);
-            var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
-            cardDescriptionDisplayObject.text = CardDescription;
+            if (CardTitle != null && CardTitleDisplay != null)
+            { 
+                CardTitleDisplay.SetActive(true);
+                var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+                cardTitleDisplayObject.text = CardTitle;
+            }
+            if (CardDescription != null && CardDescriptionDisplay != null)
+            {
+                CardDescriptionDisplay.SetActive(true);
+                var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+                cardDescriptionDisplayObject.text = CardDescription;
+            }
         }
-        //}
 
     }
 

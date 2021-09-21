@@ -60,6 +60,13 @@ public class GameController : MonoBehaviour
     GameObject cardTitleDisplay;
     GameObject cardDescriptionDisplay;
 
+    GameObject commandDisplay;
+    GameObject turnDisplay;
+    GameObject roundDisplay;
+
+    GameObject nextButton;
+    ButtonScript nextButtonScript;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -73,6 +80,19 @@ public class GameController : MonoBehaviour
         cardDescriptionDisplay = GameObject.Find("CardDescriptionDisplay");
         cardDescriptionDisplay.SetActive(false);
 
+        commandDisplay = GameObject.Find("CommandDisplay");
+        turnDisplay = GameObject.Find("TurnDisplay");
+        roundDisplay = GameObject.Find("RoundDisplay");
+
+        nextButton = GameObject.Find("NextButton");
+        nextButtonScript = nextButton.GetComponent<ButtonScript>();
+        nextButton.SetActive(false);
+
+        SetUpGameStart();
+    }
+
+    void SetUpGameStart()
+    {
         playerTerrainsGraphics = new List<MainCard>();
         aiTerrainsGraphics = new List<MainCard>();
         playerHandGraphics = new List<MainCard>();
@@ -83,6 +103,15 @@ public class GameController : MonoBehaviour
         turnCounter = 0;
         roundCounter = 0;
         turnsInCurrentRound = firstRoundTurns;
+
+        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        turnDisplayText.text = "Turn " + "1/" + turnsInCurrentRound;
+
+        var roundDisplayText = roundDisplay.GetComponent<TextMesh>();
+        roundDisplayText.text = "Round 1/2";
+
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Play card from your hand";
 
         aiStrat = new AIStrat();
 
@@ -177,7 +206,7 @@ public class GameController : MonoBehaviour
             else if (hand.Cards[i].Type == PlayCard.PlayType.CityWall)
             {
                 hand_sr.sprite = CityWallsSmallSprite;
-                card.CardTitle = "CityWall";
+                card.CardTitle = "City Wall";
                 card.CardDescription = "1 point and counters 1 militia";
             }
             else if (hand.Cards[i].Type == PlayCard.PlayType.Bandits)
@@ -286,6 +315,9 @@ public class GameController : MonoBehaviour
 
             foreach (var cardGraphic in aiTerrainsGraphics)
                 cardGraphic.Selectable = true;
+
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Select opponent card to reveal";
         }
         else
         {
@@ -310,8 +342,13 @@ public class GameController : MonoBehaviour
                 }
             }
 
-            playerTerrainsGraphics[0].CardSelected = Proceed;
-            playerTerrainsGraphics[0].Selectable = true;
+            nextButtonScript.ButtonClicked = Proceed;
+            nextButton.SetActive(true);
+            var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
+            ((TextMesh)nextButtonText).text = "Next";
+
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Click next to apply counters";
         }
     }
 
@@ -365,6 +402,11 @@ public class GameController : MonoBehaviour
             cardGraphic.Selectable = false;
 
         turnCounter++;
+        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        turnDisplayText.text = "Turn " + (turnCounter + 1) + "/" + turnsInCurrentRound;
+
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Play card from your hand";
     }
 
     public void applyCounters(PlayArea area1, PlayArea area2, List<MainCard> area2Graphics)
@@ -409,26 +451,41 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void Proceed(MainCard card)
+    public void Proceed(ButtonScript button)
     {
         applyCounters(playerArea, aiArea, aiAreaGraphics);
         applyCounters(aiArea, playerArea, playerAreaGraphics);
 
         if (roundCounter == 0)
         {
-            playerTerrainsGraphics[0].CardSelected = SetUpNextTurn;
+            nextButtonScript.ButtonClicked = SetUpNextTurn;
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Click next to start next round";
         }
         else
         {
-            playerTerrainsGraphics[0].CardSelected = FinishGame;
+            nextButtonScript.ButtonClicked = FinishGame;
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Click next to calculate score";
         }
     }
 
-    public void SetUpNextTurn(MainCard card)
+    public void SetUpNextTurn(ButtonScript button)
     {
         turnCounter = 0;
         roundCounter = 1;
         turnsInCurrentRound = secondRoundTurns;
+
+        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        turnDisplayText.text = "Turn " + "1/" + turnsInCurrentRound;
+
+        var roundDisplayText = roundDisplay.GetComponent<TextMesh>();
+        roundDisplayText.text = "Round 2/2";
+
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Play card from your hand";
+
+        nextButton.SetActive(false);
 
         //move card data to score pile
         aiScorePile.Cards.AddRange(aiArea.Cards);
@@ -464,7 +521,7 @@ public class GameController : MonoBehaviour
         InitHand(playerHand, true);
     }
 
-    public void FinishGame(MainCard card)
+    public void FinishGame(ButtonScript button)
     {
         turnCounter = 0;
         roundCounter = 2;
@@ -493,12 +550,58 @@ public class GameController : MonoBehaviour
         //var scoreTextPlayer = GameObject.Find("ScoreTextPlayer");
 
         var scoreTextAIObject = scoreTextAI.GetComponent<TextMesh>();
-        scoreTextAIObject.text = aiScorePile.CountScore(aiTerrains).ToString();
+        scoreTextAIObject.text = "Points: " + aiScorePile.CountScore(aiTerrains).ToString();
         scoreTextAI.SetActive(true);
 
         var scoreTextPlayerObject = scoreTextPlayer.GetComponent<TextMesh>();
-        scoreTextPlayerObject.text = playerScorePile.CountScore(playerTerrains).ToString();
+        scoreTextPlayerObject.text = "Points: " + playerScorePile.CountScore(playerTerrains).ToString();
         scoreTextPlayer.SetActive(true);
+
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Click restart to play again";
+
+        var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
+        ((TextMesh)nextButtonText).text = "Restart";
+        nextButtonScript.ButtonClicked = RestartGame;
+    }
+
+    public void RestartGame(ButtonScript button)
+    {
+        nextButton.SetActive(false);
+        scoreTextAI.SetActive(false);
+        scoreTextPlayer.SetActive(false);
+
+        aiScorePile.Cards.Clear();
+        playerScorePile.Cards.Clear();
+
+        //clear play area graphics
+        foreach (var graphic in aiAreaGraphics)
+            Destroy(graphic.gameObject);
+        aiAreaGraphics = new List<MainCard>();
+
+        foreach (var graphic in playerAreaGraphics)
+            Destroy(graphic.gameObject);
+        playerAreaGraphics = new List<MainCard>();
+
+        //clear terrain area graphics
+        foreach (var graphic in aiTerrainsGraphics)
+            Destroy(graphic.gameObject);
+        aiTerrainsGraphics = new List<MainCard>();
+
+        foreach (var graphic in playerTerrainsGraphics)
+            Destroy(graphic.gameObject);
+        playerTerrainsGraphics = new List<MainCard>();
+
+        //clear hand area graphics
+        foreach (var graphic in aiHandGraphics)
+            Destroy(graphic.gameObject);
+        aiHandGraphics = new List<MainCard>();
+
+        foreach (var graphic in playerHandGraphics)
+            Destroy(graphic.gameObject);
+        playerHandGraphics = new List<MainCard>();
+
+        SetUpGameStart();
     }
 
     public void ShowScorePile(ScorePile pile, bool player)
@@ -512,7 +615,7 @@ public class GameController : MonoBehaviour
                 card.transform.position = new Vector3(-6 + (1.75f * i), -1f, 0);
                 card.FaceDown = false;
                 card.VisibleToPlayer = true;
-                playerTerrainsGraphics.Add(card);
+                playerAreaGraphics.Add(card);
             }
             else
             {
@@ -520,7 +623,7 @@ public class GameController : MonoBehaviour
                 card.transform.position = new Vector3(-6 + (1.75f * i), 1f, 0);
                 card.FaceDown = false;
                 card.VisibleToPlayer = true;
-                aiTerrainsGraphics.Add(card);
+                aiAreaGraphics.Add(card);
             }
 
             SpriteRenderer pile_sr = card.GetComponent<SpriteRenderer>();
