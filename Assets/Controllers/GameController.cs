@@ -219,7 +219,7 @@ public class GameController : MonoBehaviour
             {
                 hand_sr.sprite = RaidersSmallSprite;
                 card.CardTitle = "Raiders";
-                card.CardDescription = "1 point and counters 1 farms";
+                card.CardDescription = "1 point and counters 1 farm";
             }
         }
     }
@@ -627,30 +627,44 @@ public class GameController : MonoBehaviour
             }
 
             SpriteRenderer pile_sr = card.GetComponent<SpriteRenderer>();
+            card.CardTitleDisplay = cardTitleDisplay;
+            card.CardDescriptionDisplay = cardDescriptionDisplay;
 
             if (pile.Cards[i].Type == PlayCard.PlayType.Militia)
             {
                 pile_sr.sprite = MilitiaSmallSprite;
+                card.CardTitle = "Militia";
+                card.CardDescription = "1 point + 1 for each cliff";
             }
             else if (pile.Cards[i].Type == PlayCard.PlayType.TradingPost)
             {
                 pile_sr.sprite = TradingPostSmallSprite;
+                card.CardTitle = "Trading Post";
+                card.CardDescription = "1 point + 1 for each river";
             }
             else if (pile.Cards[i].Type == PlayCard.PlayType.Farm)
             {
                 pile_sr.sprite = FarmSmallSprite;
+                card.CardTitle = "Farm";
+                card.CardDescription = "1 point + 1 for each field";
             }
             else if (pile.Cards[i].Type == PlayCard.PlayType.CityWall)
             {
                 pile_sr.sprite = CityWallsSmallSprite;
+                card.CardTitle = "City Wall";
+                card.CardDescription = "1 point and counters 1 militia";
             }
             else if (pile.Cards[i].Type == PlayCard.PlayType.Bandits)
             {
                 pile_sr.sprite = BanditsSmallSprite;
+                card.CardTitle = "Bandits";
+                card.CardDescription = "1 point and counters 1 trading post";
             }
             else
             {
                 pile_sr.sprite = RaidersSmallSprite;
+                card.CardTitle = "Raiders";
+                card.CardDescription = "1 point and counters 1 farm";
             }
         }
     }

@@ -53,7 +53,7 @@ public class MainCard : MonoBehaviour
         }
 
         //cheat mode if commented
-        if (VisibleToPlayer)
+        if (VisibleToPlayer || FaceDown == false)
         {
             if (CardTitle != null && CardTitleDisplay != null)
             { 
