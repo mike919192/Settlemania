@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayCard
+public class PlayCard : Card, ICard
 {
+    //do I want to combine PlayType and TerrainType into one enum? not sure
     public enum PlayType { Militia, TradingPost, Farm, CityWall, Bandits, Raiders };
 
     private PlayType _type;
@@ -15,28 +16,13 @@ public class PlayCard
         }
     }
 
-    private bool _revealed;
-    public bool IsRevealed
-    {
-        get
-        {
-            return _revealed;
-        }
-    }
-
     public PlayCard(PlayType Type)
     {
         _type = Type;
         _revealed = false;
     }
-
     public override string ToString()
     {
         return _type.ToString();
-    }
-
-    public void Reveal()
-    {
-        _revealed = true;
     }
 }

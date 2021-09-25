@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using System.Linq;
 
 public class GameController : MonoBehaviour
 {
@@ -119,13 +120,13 @@ public class GameController : MonoBehaviour
 
         playerTerrains = new TerrainArea(true);
 
-        playerTerrains.Cards.AddRange(tDeck.DrawCards(3));
+        playerTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
 
         InitTerrain(playerTerrains, true);
 
         aiTerrains = new TerrainArea(false);
 
-        aiTerrains.Cards.AddRange(tDeck.DrawCards(3));
+        aiTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
 
         InitTerrain(aiTerrains, false);
 
@@ -133,13 +134,13 @@ public class GameController : MonoBehaviour
 
         playerHand = new PlayHand(true);
 
-        playerHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound));
+        playerHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
 
         InitHand(playerHand, true);
 
         aiHand = new PlayHand(false);
 
-        aiHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound));
+        aiHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
 
         InitHand(aiHand, false);
 
@@ -251,12 +252,12 @@ public class GameController : MonoBehaviour
 
             SpriteRenderer terrain_sr = card.GetComponent<SpriteRenderer>();
 
-            if (terrain.Cards[i].Type == TerrainCard.TerrainType.Cliff)
+            if (((TerrainCard)terrain.Cards[i]).Type == TerrainCard.TerrainType.Cliff)
             {
                 terrain_sr.sprite = CliffSmallSprite;
                 card.CardTitle = "Cliff";
             }
-            else if (terrain.Cards[i].Type == TerrainCard.TerrainType.River)
+            else if (((TerrainCard)terrain.Cards[i]).Type == TerrainCard.TerrainType.River)
             {
                 terrain_sr.sprite = RiverSmallSprite;
                 card.CardTitle = "River";
@@ -414,15 +415,15 @@ public class GameController : MonoBehaviour
         //loop player area and find any counters
         for (int i = 0; i < area1.Cards.Count; i++)
         {
-            if ((area1.Cards[i].Type == PlayCard.PlayType.CityWall) ||
-                (area1.Cards[i].Type == PlayCard.PlayType.Bandits) ||
-                (area1.Cards[i].Type == PlayCard.PlayType.Raiders))
+            if ((((PlayCard)area1.Cards[i]).Type == PlayCard.PlayType.CityWall) ||
+                (((PlayCard)area1.Cards[i]).Type == PlayCard.PlayType.Bandits) ||
+                (((PlayCard)area1.Cards[i]).Type == PlayCard.PlayType.Raiders))
             {
                 //when counter found then loop ai area for the card it counters
                 for (int j = 0; j < area2.Cards.Count; j++)
                 {
                     //if you find it remove it
-                    if ((area1.Cards[i].Type == PlayCard.PlayType.CityWall) && (area2.Cards[j].Type == PlayCard.PlayType.Militia))
+                    if ((((PlayCard)area1.Cards[i]).Type == PlayCard.PlayType.CityWall) && (((PlayCard)area2.Cards[j]).Type == PlayCard.PlayType.Militia))
                     {
                         area2.Cards.RemoveAt(j);
                         var card = area2Graphics[j];
@@ -430,7 +431,7 @@ public class GameController : MonoBehaviour
                         Destroy(card.gameObject);
                         break;
                     }
-                    if ((area1.Cards[i].Type == PlayCard.PlayType.Bandits) && (area2.Cards[j].Type == PlayCard.PlayType.TradingPost))
+                    if ((((PlayCard)area1.Cards[i]).Type == PlayCard.PlayType.Bandits) && (((PlayCard)area2.Cards[j]).Type == PlayCard.PlayType.TradingPost))
                     {
                         area2.Cards.RemoveAt(j);
                         var card = area2Graphics[j];
@@ -438,7 +439,7 @@ public class GameController : MonoBehaviour
                         Destroy(card.gameObject);
                         break;
                     }
-                    if ((area1.Cards[i].Type == PlayCard.PlayType.Raiders) && (area2.Cards[j].Type == PlayCard.PlayType.Farm))
+                    if ((((PlayCard)area1.Cards[i]).Type == PlayCard.PlayType.Raiders) && (((PlayCard)area2.Cards[j]).Type == PlayCard.PlayType.Farm))
                     {
                         area2.Cards.RemoveAt(j);
                         var card = area2Graphics[j];
@@ -488,10 +489,10 @@ public class GameController : MonoBehaviour
         nextButton.SetActive(false);
 
         //move card data to score pile
-        aiScorePile.Cards.AddRange(aiArea.Cards);
+        aiScorePile.Cards.AddRange(aiArea.Cards.Cast<PlayCard>().ToList());
         aiArea.Cards.Clear();
 
-        playerScorePile.Cards.AddRange(playerArea.Cards);
+        playerScorePile.Cards.AddRange(playerArea.Cards.Cast<PlayCard>().ToList());
         playerArea.Cards.Clear();
 
         //clear play area graphics
@@ -504,8 +505,8 @@ public class GameController : MonoBehaviour
         playerAreaGraphics = new List<MainCard>();
 
         //draw cards for second round
-        playerHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound));
-        aiHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound));
+        playerHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
+        aiHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
 
         //refresh hands
         foreach (var graphic in aiHandGraphics)
@@ -527,10 +528,10 @@ public class GameController : MonoBehaviour
         roundCounter = 2;
 
         //move card data to score pile
-        aiScorePile.Cards.AddRange(aiArea.Cards);
+        aiScorePile.Cards.AddRange(aiArea.Cards.Cast<PlayCard>().ToList());
         aiArea.Cards.Clear();
 
-        playerScorePile.Cards.AddRange(playerArea.Cards);
+        playerScorePile.Cards.AddRange(playerArea.Cards.Cast<PlayCard>().ToList());
         playerArea.Cards.Clear();
 
         //clear play area graphics

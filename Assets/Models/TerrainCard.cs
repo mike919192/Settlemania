@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainCard
+public class TerrainCard : Card, ICard
 {
     public enum TerrainType { Cliff, River, Field };
 
@@ -16,16 +16,6 @@ public class TerrainCard
         }
     }
 
-    private bool _revealed;
-
-    public bool IsRevealed
-    {
-        get
-        {
-            return _revealed;
-        }
-    }
-
     public TerrainCard(TerrainType Type)
     {
         _type = Type;
@@ -35,10 +25,5 @@ public class TerrainCard
     public override string ToString()
     {
         return _type.ToString();
-    }
-
-    public void Reveal()
-    {
-        _revealed = true;
     }
 }

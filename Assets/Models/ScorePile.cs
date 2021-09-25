@@ -39,7 +39,7 @@ public class ScorePile
 
                 for (int j = 0; j < terrain.Cards.Count; j++)
                 {
-                    if (terrain.Cards[j].Type == TerrainCard.TerrainType.Cliff)
+                    if (((TerrainCard)terrain.Cards[j]).Type == TerrainCard.TerrainType.Cliff)
                     {
                         score += 1;
                     }
@@ -52,7 +52,7 @@ public class ScorePile
 
                 for (int j = 0; j < terrain.Cards.Count; j++)
                 {
-                    if (terrain.Cards[j].Type == TerrainCard.TerrainType.River)
+                    if (((TerrainCard)terrain.Cards[j]).Type == TerrainCard.TerrainType.River)
                     {
                         score += 1;
                     }
@@ -65,7 +65,7 @@ public class ScorePile
 
                 for (int j = 0; j < terrain.Cards.Count; j++)
                 {
-                    if (terrain.Cards[j].Type == TerrainCard.TerrainType.Field)
+                    if (((TerrainCard)terrain.Cards[j]).Type == TerrainCard.TerrainType.Field)
                     {
                         score += 1;
                     }

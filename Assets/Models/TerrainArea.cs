@@ -2,69 +2,68 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerrainArea
+public class TerrainArea : Area
 {
-    private List<TerrainCard> _cards;
-    private bool _visibleToPlayer;
+    //private List<TerrainCard> _cards;
+    //private bool _visibleToPlayer;
 
-    public List<TerrainCard> Cards
+    //public List<TerrainCard> Cards
+    //{
+    //    get
+    //    {
+    //        return _cards;
+    //    }
+    //}
+
+    //public int NumRevealedCards
+    //{
+    //    get
+    //    {
+    //        int numRevealed = 0;
+
+    //        for (int i = 0; i < _cards.Count; i++)
+    //        {
+    //            if (_cards[i].IsRevealed)
+    //            {
+    //                numRevealed++;
+    //            }
+    //        }
+
+    //        return numRevealed;
+    //    }
+    //}
+
+    public TerrainArea(bool VisibleToPlayer) : base(VisibleToPlayer)
     {
-        get
-        {
-            return _cards;
-        }
+        
     }
 
-    public int NumRevealedCards
-    {
-        get
-        {
-            int numRevealed = 0;
+    //public string ToString(int numOffset)
+    //{
+    //    string output = "";
 
-            for (int i = 0; i < _cards.Count; i++)
-            {
-                if (_cards[i].IsRevealed)
-                {
-                    numRevealed++;
-                }
-            }
+    //    for (int i = 0; i < _cards.Count; i++)
+    //    {
+    //        if (_visibleToPlayer == true)
+    //        {
+    //            var faceDown = _cards[i].IsRevealed ? "" : "/Face Down";
+    //            output += "(" + (i + 1 + numOffset) + ")" + _cards[i] + faceDown + ", ";
+    //        }
+    //        else
+    //        {
+    //            if (_cards[i].IsRevealed == true)
+    //            {
+    //                output += "(" + (i + 1 + numOffset) + ")" + _cards[i] + ", ";
+    //            }
+    //            else
+    //            {
+    //                output += "(" + (i + 1 + numOffset) + ")Face Down, ";
+    //            }
+    //        }
+    //    }
 
-            return numRevealed;
-        }
-    }
-
-    public TerrainArea(bool VisibleToPlayer)
-    {
-        _cards = new List<TerrainCard>();
-        _visibleToPlayer = VisibleToPlayer;
-    }
-
-    public string ToString(int numOffset)
-    {
-        string output = "";
-
-        for (int i = 0; i < _cards.Count; i++)
-        {
-            if (_visibleToPlayer == true)
-            {
-                var faceDown = _cards[i].IsRevealed ? "" : "/Face Down";
-                output += "(" + (i + 1 + numOffset) + ")" + _cards[i] + faceDown + ", ";
-            }
-            else
-            {
-                if (_cards[i].IsRevealed == true)
-                {
-                    output += "(" + (i + 1 + numOffset) + ")" + _cards[i] + ", ";
-                }
-                else
-                {
-                    output += "(" + (i + 1 + numOffset) + ")Face Down, ";
-                }
-            }
-        }
-
-        return output;
-    }
+    //    return output;
+    //}
 
     public int NumOfType(TerrainCard.TerrainType type, bool player) //player when true, ai when false
     {
@@ -74,7 +73,7 @@ public class TerrainArea
         {
             for (int i = 0; i < _cards.Count; i++)
             {
-                if (_cards[i].Type == type)
+                if (((TerrainCard)_cards[i]).Type == type)
                 {
                     count++;
                 }
@@ -84,7 +83,7 @@ public class TerrainArea
         {
             for (int i = 0; i < _cards.Count; i++)
             {
-                if (_cards[i].IsRevealed && _cards[i].Type == type)
+                if (_cards[i].IsRevealed && ((TerrainCard)_cards[i]).Type == type)
                 {
                     count++;
                 }
@@ -94,21 +93,21 @@ public class TerrainArea
         return count;
     }
 
-    public int NumOfFaceDown(bool player) //player when true, ai when false
-    {
-        int count = 0;
+    //public int NumOfFaceDown(bool player) //player when true, ai when false
+    //{
+    //    int count = 0;
 
-        if (player != _visibleToPlayer)
-        {
-            for (int i = 0; i < _cards.Count; i++)
-            {
-                if (_cards[i].IsRevealed == false)
-                {
-                    count++;
-                }
-            }
-        }
+    //    if (player != _visibleToPlayer)
+    //    {
+    //        for (int i = 0; i < _cards.Count; i++)
+    //        {
+    //            if (_cards[i].IsRevealed == false)
+    //            {
+    //                count++;
+    //            }
+    //        }
+    //    }
 
-        return count;
-    }
+    //    return count;
+    //}
 }
