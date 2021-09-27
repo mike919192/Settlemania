@@ -42,6 +42,30 @@ public class MainCard : MonoBehaviour
     public string CardTitle;
     public string CardDescription;
 
+    private Vector3 goToPosition;
+    private bool goTo;
+
+    public void MoveToPosition(Vector3 Position)
+    {
+        goToPosition = Position;
+        goTo = true;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (goTo == true)
+        {
+            transform.Translate((goToPosition - transform.position) * 10.0f * Time.deltaTime);
+
+            if (Vector3.Magnitude(goToPosition - transform.position) < 0.01f)
+            {
+                goTo = false;
+                transform.position = goToPosition;
+            }
+        }
+    }
+
     public void OnMouseEnter()
     {
         if (FaceDown == true)

@@ -24,6 +24,14 @@ public class Deck
         return shuffledCards;
     }
 
+    public int CardCount
+    {
+        get
+        {
+            return _cards.Count;
+        }
+    }
+
     public ICard DrawCard()
     {
         var card = _cards[0];

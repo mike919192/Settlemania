@@ -68,6 +68,12 @@ public class GameController : MonoBehaviour
     GameObject nextButton;
     ButtonScript nextButtonScript;
 
+    GameObject playDeckGraphic;
+    DeckScript playDeckScript;
+
+    GameObject terrainDeckGraphic;
+    DeckScript terrainDeckScript;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -88,6 +94,12 @@ public class GameController : MonoBehaviour
         nextButton = GameObject.Find("NextButton");
         nextButtonScript = nextButton.GetComponent<ButtonScript>();
         nextButton.SetActive(false);
+
+        playDeckGraphic = GameObject.Find("PlayDeck");
+        playDeckScript = playDeckGraphic.GetComponent<DeckScript>();
+
+        terrainDeckGraphic = GameObject.Find("TerrainDeck");
+        terrainDeckScript = terrainDeckGraphic.GetComponent<DeckScript>();
 
         SetUpGameStart();
     }
@@ -117,6 +129,7 @@ public class GameController : MonoBehaviour
         aiStrat = new AIStrat();
 
         tDeck = new TerrainDeck(5);
+        terrainDeckScript.deck = tDeck;
 
         playerTerrains = new TerrainArea(true);
 
@@ -131,6 +144,7 @@ public class GameController : MonoBehaviour
         InitTerrain(aiTerrains, false);
 
         pDeck = new PlayDeck(5);
+        playDeckScript.deck = pDeck;
 
         playerHand = new PlayHand(true);
 
@@ -162,10 +176,12 @@ public class GameController : MonoBehaviour
         for (int i = 0; i < hand.Cards.Count; i++)
         {
             MainCard card = Instantiate(OriginalCard) as MainCard;
+            //start at play card deck
+            card.transform.position = new Vector3(8.0f, 1.0f, 0.0f);
             if (player)
             {
                 card.name = "PlayerHand" + (i + 1);
-                card.transform.position = new Vector3(-6 + (1.75f * i), -4f, 0);
+                card.MoveToPosition(new Vector3(-6 + ((12.0f / (hand.Cards.Count - 1)) * i), -4f, i/100.0f));
                 card.FaceDown = false;
                 card.VisibleToPlayer = true;
                 card.Selectable = true;
@@ -175,7 +191,7 @@ public class GameController : MonoBehaviour
             else
             {
                 card.name = "AiHand" + (i + 1);
-                card.transform.position = new Vector3(-6 + (1.75f * i), 4f, 0);
+                card.MoveToPosition(new Vector3(-6 + ((12.0f / (hand.Cards.Count - 1)) * i), 4f, i/100.0f));
                 card.FaceDown = true;
                 card.VisibleToPlayer = false;
                 card.Selectable = false;
@@ -230,10 +246,12 @@ public class GameController : MonoBehaviour
         for (int i = 0; i < terrain.Cards.Count; i++)
         {
             MainCard card = Instantiate(OriginalCard) as MainCard;
+            //start at play card deck
+            card.transform.position = new Vector3(8.0f, -1.0f, 0.0f);
             if (player)
             {
                 card.name = "PlayerTerrain" + (i + 1);
-                card.transform.position = new Vector3(-2 + 2 * i, -2.5f, 0);
+                card.MoveToPosition(new Vector3(-2 + 2 * i, -2.5f, 1));
                 card.FaceDown = true;
                 card.VisibleToPlayer = true;
                 playerTerrainsGraphics.Add(card);
@@ -241,7 +259,7 @@ public class GameController : MonoBehaviour
             else
             {
                 card.name = "AITerrain" + (i + 1);
-                card.transform.position = new Vector3(-2 + 2 * i, 2.5f, 0);
+                card.MoveToPosition(new Vector3(-2 + 2 * i, 2.5f, 1));
                 card.FaceDown = true;
                 card.VisibleToPlayer = false;
                 card.CardSelected = RevealACard;
@@ -276,7 +294,7 @@ public class GameController : MonoBehaviour
         int index = playerHandGraphics.IndexOf(card);
 
         // move card to play area
-        card.transform.position = new Vector3(-6 + (1.75f * turnCounter), -1f, 0);
+        card.MoveToPosition(new Vector3(-6 + (1.75f * turnCounter), -1f, 0));
         card.FaceDown = true;
         card.Selectable = false;
 
@@ -294,7 +312,7 @@ public class GameController : MonoBehaviour
         var aiCard = aiHandGraphics[aiIndex];
 
         //move card to play area
-        aiCard.transform.position = new Vector3(-6 + (1.75f * turnCounter), 1f, 0);
+        aiCard.MoveToPosition(new Vector3(-6 + (1.75f * turnCounter), 1f, 0));
 
         //move reference in list
         aiHandGraphics.Remove(aiCard);

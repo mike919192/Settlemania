@@ -27,7 +27,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1578501520908123336}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2, y: -3.5, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1578501521318568085}
@@ -49,6 +49,7 @@ SpriteRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -124,7 +125,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Card_Back: {fileID: 1578501521318568090}
   VisibleToPlayer: 0
-  FaceDown: 1
+  Selectable: 0
+  CardTitleDisplay: {fileID: 0}
+  CardDescriptionDisplay: {fileID: 0}
+  CardTitle: 
+  CardDescription: 
 --- !u!1 &1578501521318568090
 GameObject:
   m_ObjectHideFlags: 0
@@ -171,6 +176,7 @@ SpriteRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
