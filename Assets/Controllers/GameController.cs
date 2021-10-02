@@ -50,6 +50,9 @@ public class GameController : MonoBehaviour
     private List<MainCard> playerAreaGraphics;
     private List<MainCard> aiAreaGraphics;
 
+    private List<MainCard> playerScorePileGraphics;
+    private List<MainCard> aiScorePileGraphics;
+
     Action<MainCard> cbCardPlayedFromHand;
 
     private PlayDeck pDeck;
@@ -112,6 +115,8 @@ public class GameController : MonoBehaviour
         aiHandGraphics = new List<MainCard>();
         playerAreaGraphics = new List<MainCard>();
         aiAreaGraphics = new List<MainCard>();
+        playerScorePileGraphics = new List<MainCard>();
+        aiScorePileGraphics = new List<MainCard>();
 
         turnCounter = 0;
         roundCounter = 0;
@@ -581,13 +586,21 @@ public class GameController : MonoBehaviour
         playerArea.Cards.Clear();
 
         //clear play area graphics
-        foreach (var graphic in aiAreaGraphics)
-            Destroy(graphic.gameObject);
-        aiAreaGraphics = new List<MainCard>();
+        aiScorePileGraphics.AddRange(aiAreaGraphics);
+        aiAreaGraphics.RemoveRange(0, aiAreaGraphics.Count);
 
-        foreach (var graphic in playerAreaGraphics)
-            Destroy(graphic.gameObject);
-        playerAreaGraphics = new List<MainCard>();
+        foreach(var cardGraphic in aiScorePileGraphics)
+        {
+            cardGraphic.MoveToPosition(new Vector3(-10f, 1f, 0));
+        }
+
+        playerScorePileGraphics.AddRange(playerAreaGraphics);
+        playerAreaGraphics.RemoveRange(0, playerAreaGraphics.Count);
+        
+        foreach(var cardGraphic in playerScorePileGraphics)
+        {
+            cardGraphic.MoveToPosition(new Vector3(-10f, -1f, 0));
+        }
 
         //draw cards for second round
         playerHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
@@ -620,17 +633,25 @@ public class GameController : MonoBehaviour
         playerArea.Cards.Clear();
 
         //clear play area graphics
-        foreach (var graphic in aiAreaGraphics)
-            Destroy(graphic.gameObject);
-        aiAreaGraphics = new List<MainCard>();
+        aiScorePileGraphics.AddRange(aiAreaGraphics);
+        aiAreaGraphics.RemoveRange(0, aiAreaGraphics.Count);
 
-        foreach (var graphic in playerAreaGraphics)
-            Destroy(graphic.gameObject);
-        playerAreaGraphics = new List<MainCard>();
+        playerScorePileGraphics.AddRange(playerAreaGraphics);
+        playerAreaGraphics.RemoveRange(0, playerAreaGraphics.Count);
 
         //show score pile and scores
-        ShowScorePile(aiScorePile, false);
-        ShowScorePile(playerScorePile, true);
+        //ShowScorePile(aiScorePile, false);
+        //ShowScorePile(playerScorePile, true);
+
+        for (int i = 0; i < aiScorePileGraphics.Count; i++)
+        {
+            aiScorePileGraphics[i].MoveToPosition(new Vector3(-6 + (1.75f * i), 1f, i/100));            
+        }
+
+        for (int i = 0; i < playerScorePileGraphics.Count; i++)
+        {
+            playerScorePileGraphics[i].MoveToPosition(new Vector3(-6 + (1.75f * i), -1f, i/100));
+        }
 
         //var scoreTextAI = GameObject.Find("ScoreTextAI");
         //var scoreTextPlayer = GameObject.Find("ScoreTextPlayer");
@@ -686,6 +707,15 @@ public class GameController : MonoBehaviour
         foreach (var graphic in playerHandGraphics)
             Destroy(graphic.gameObject);
         playerHandGraphics = new List<MainCard>();
+
+        //clear score pile
+        foreach (var graphic in aiScorePileGraphics)
+            Destroy(graphic.gameObject);
+        aiScorePileGraphics = new List<MainCard>();
+
+        foreach (var graphic in playerScorePileGraphics)
+            Destroy(graphic.gameObject);
+        playerScorePileGraphics = new List<MainCard>();
 
         SetUpGameStart();
     }
