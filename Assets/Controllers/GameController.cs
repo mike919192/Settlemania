@@ -171,73 +171,134 @@ public class GameController : MonoBehaviour
         
     }
 
+    void SpaceCardsInHand(List<MainCard> handGraphics, bool player)
+    {
+        float yValue;
+        if (player)
+            yValue = -4f;
+        else
+            yValue = 4f;
+
+        //use this method for more than 4 cards
+        if (handGraphics.Count > 6)
+        {
+            var xStep = 12.0f / (handGraphics.Count - 1);
+            for (int i = 0; i < handGraphics.Count; i++)
+            {
+                handGraphics[i].MoveToPosition(new Vector3(-6 + (xStep * i), yValue, i / 100.0f));
+            }
+        }
+
+        //user this for 4 or less
+        else
+        {
+            var xStep = 2.0f;
+            for (int i = 0; i < handGraphics.Count; i++)
+            {
+                handGraphics[i].MoveToPosition(new Vector3((i * xStep) - ((handGraphics.Count-1) / 2.0f * xStep), yValue, i / 100.0f));
+            }
+        }
+    }
+
     void InitHand(PlayHand hand, bool player)
     {
         for (int i = 0; i < hand.Cards.Count; i++)
         {
-            MainCard card = Instantiate(OriginalCard) as MainCard;
-            //start at play card deck
-            card.transform.position = new Vector3(8.0f, 1.0f, 0.0f);
+            MainCard card;
             if (player)
             {
+                if (playerHandGraphics.Count <= i)
+                {
+                    card = Instantiate(OriginalCard) as MainCard;
+                    playerHandGraphics.Add(card);
+
+                    //start at play card deck
+                    card.transform.position = new Vector3(8.0f, 1.0f, 0.0f);
+
+                    card.FaceDown = false;
+                    card.VisibleToPlayer = true;
+                    card.Selectable = true;
+                    card.CardSelected = PlayCardFromHand;
+                    SetPlayCardSprite(card, hand.Cards[i]);
+                }
+                else
+                {
+                    card = playerHandGraphics[i];
+                }
+
                 card.name = "PlayerHand" + (i + 1);
-                card.MoveToPosition(new Vector3(-6 + ((12.0f / (hand.Cards.Count - 1)) * i), -4f, i/100.0f));
-                card.FaceDown = false;
-                card.VisibleToPlayer = true;
-                card.Selectable = true;
-                card.CardSelected = PlayCardFromHand;
-                playerHandGraphics.Add(card);
             }
+            
             else
             {
+                if (aiHandGraphics.Count <= i)
+                {
+                    card = Instantiate(OriginalCard) as MainCard;
+                    aiHandGraphics.Add(card);
+
+                    //start at play card deck
+                    card.transform.position = new Vector3(8.0f, 1.0f, 0.0f);
+
+                    card.FaceDown = true;
+                    card.VisibleToPlayer = false;
+                    card.Selectable = false;
+                    SetPlayCardSprite(card, hand.Cards[i]);
+                }
+                else
+                {
+                    card = aiHandGraphics[i];
+                }
+
                 card.name = "AiHand" + (i + 1);
-                card.MoveToPosition(new Vector3(-6 + ((12.0f / (hand.Cards.Count - 1)) * i), 4f, i/100.0f));
-                card.FaceDown = true;
-                card.VisibleToPlayer = false;
-                card.Selectable = false;
-                aiHandGraphics.Add(card);
             }
+            
+        }
 
-            SpriteRenderer hand_sr = card.GetComponent<SpriteRenderer>();
-            card.CardTitleDisplay = cardTitleDisplay;
-            card.CardDescriptionDisplay = cardDescriptionDisplay;
+        SpaceCardsInHand(playerHandGraphics, true);
+        SpaceCardsInHand(aiHandGraphics, false);
+    }
 
-            if (hand.Cards[i].Type == PlayCard.PlayType.Militia)
-            {
-                hand_sr.sprite = MilitiaSmallSprite;
-                card.CardTitle = "Militia";
-                card.CardDescription = "1 point + 1 for each cliff";
-            }
-            else if (hand.Cards[i].Type == PlayCard.PlayType.TradingPost)
-            {
-                hand_sr.sprite = TradingPostSmallSprite;
-                card.CardTitle = "Trading Post";
-                card.CardDescription = "1 point + 1 for each river";
-            }
-            else if (hand.Cards[i].Type == PlayCard.PlayType.Farm)
-            {
-                hand_sr.sprite = FarmSmallSprite;
-                card.CardTitle = "Farm";
-                card.CardDescription = "1 point + 1 for each field";
-            }
-            else if (hand.Cards[i].Type == PlayCard.PlayType.CityWall)
-            {
-                hand_sr.sprite = CityWallsSmallSprite;
-                card.CardTitle = "City Wall";
-                card.CardDescription = "1 point and counters 1 militia";
-            }
-            else if (hand.Cards[i].Type == PlayCard.PlayType.Bandits)
-            {
-                hand_sr.sprite = BanditsSmallSprite;
-                card.CardTitle = "Bandits";
-                card.CardDescription = "1 point and counters 1 trading post";
-            }
-            else
-            {
-                hand_sr.sprite = RaidersSmallSprite;
-                card.CardTitle = "Raiders";
-                card.CardDescription = "1 point and counters 1 farm";
-            }
+    void SetPlayCardSprite(MainCard card, PlayCard playCard)
+    {
+        SpriteRenderer hand_sr = card.GetComponent<SpriteRenderer>();
+        card.CardTitleDisplay = cardTitleDisplay;
+        card.CardDescriptionDisplay = cardDescriptionDisplay;
+
+        if (playCard.Type == PlayCard.PlayType.Militia)
+        {
+            hand_sr.sprite = MilitiaSmallSprite;
+            card.CardTitle = "Militia";
+            card.CardDescription = "1 point + 1 for each cliff";
+        }
+        else if (playCard.Type == PlayCard.PlayType.TradingPost)
+        {
+            hand_sr.sprite = TradingPostSmallSprite;
+            card.CardTitle = "Trading Post";
+            card.CardDescription = "1 point + 1 for each river";
+        }
+        else if (playCard.Type == PlayCard.PlayType.Farm)
+        {
+            hand_sr.sprite = FarmSmallSprite;
+            card.CardTitle = "Farm";
+            card.CardDescription = "1 point + 1 for each field";
+        }
+        else if (playCard.Type == PlayCard.PlayType.CityWall)
+        {
+            hand_sr.sprite = CityWallsSmallSprite;
+            card.CardTitle = "City Wall";
+            card.CardDescription = "1 point and counters 1 militia";
+        }
+        else if (playCard.Type == PlayCard.PlayType.Bandits)
+        {
+            hand_sr.sprite = BanditsSmallSprite;
+            card.CardTitle = "Bandits";
+            card.CardDescription = "1 point and counters 1 trading post";
+        }
+        else
+        {
+            hand_sr.sprite = RaidersSmallSprite;
+            card.CardTitle = "Raiders";
+            card.CardDescription = "1 point and counters 1 farm";
         }
     }
 
@@ -302,11 +363,14 @@ public class GameController : MonoBehaviour
         playerHandGraphics.Remove(card);
         playerAreaGraphics.Add(card);
 
+        //respace cards
+        SpaceCardsInHand(playerHandGraphics, true);
+
         //move card in data
         playerArea.Cards.Add(playerHand.SelectCard(index));
 
         //ai plays card
-        var aiIndex = aiStrat.GetNextPlayPick(aiHand, aiTerrains, aiArea, playerArea, playerTerrains, turnCounter - (firstRoundTurns - 1));
+        var aiIndex = aiStrat.GetNextPlayPick(aiHand, aiTerrains, aiArea, playerArea, playerTerrains, (turnsInCurrentRound - 1) - turnCounter);
 
         //get card reference
         var aiCard = aiHandGraphics[aiIndex];
@@ -318,6 +382,9 @@ public class GameController : MonoBehaviour
         aiHandGraphics.Remove(aiCard);
         aiAreaGraphics.Add(aiCard);
         aiCard.CardSelected = RevealACard;
+
+        //respace cards
+        SpaceCardsInHand(aiHandGraphics, false);
 
         //move card in data
         aiArea.Cards.Add(aiHand.SelectCard(aiIndex));
@@ -527,15 +594,15 @@ public class GameController : MonoBehaviour
         aiHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
 
         //refresh hands
-        foreach (var graphic in aiHandGraphics)
-            Destroy(graphic.gameObject);
-        aiHandGraphics = new List<MainCard>();
+        //foreach (var graphic in aiHandGraphics)
+        //    Destroy(graphic.gameObject);
+        //aiHandGraphics = new List<MainCard>();
 
         InitHand(aiHand, false);
 
-        foreach (var graphic in playerHandGraphics)
-            Destroy(graphic.gameObject);
-        playerHandGraphics = new List<MainCard>();
+        //foreach (var graphic in playerHandGraphics)
+        //    Destroy(graphic.gameObject);
+        //playerHandGraphics = new List<MainCard>();
 
         InitHand(playerHand, true);
     }

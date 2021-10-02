@@ -222,6 +222,7 @@ public class AIStrat
                 {
                     pointArray.Add(playerTerrain.NumOfType(TerrainCard.TerrainType.Cliff, false) + 0.5 + (playerTerrain.NumOfFaceDown(false) / 3.0));
                 }
+                //even if we dont see any land maybe add some weight to face down cards
                 else
                 {
                     pointArray.Add(1);
@@ -239,6 +240,7 @@ public class AIStrat
                 {
                     pointArray.Add(playerTerrain.NumOfType(TerrainCard.TerrainType.River, false) + 0.5 + (playerTerrain.NumOfFaceDown(false) / 3.0));
                 }
+                //even if we dont see any land maybe add some weight to face down cards
                 else
                 {
                     pointArray.Add(1);
@@ -256,6 +258,7 @@ public class AIStrat
                 {
                     pointArray.Add(playerTerrain.NumOfType(TerrainCard.TerrainType.Field, false) + 0.5 + (playerTerrain.NumOfFaceDown(false) / 3.0));
                 }
+                //even if we dont see any land maybe add some weight to face down cards
                 else
                 {
                     pointArray.Add(1);

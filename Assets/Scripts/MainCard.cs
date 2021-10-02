@@ -77,8 +77,8 @@ public class MainCard : MonoBehaviour
         }
 
         //cheat mode if commented
-        if (VisibleToPlayer || FaceDown == false)
-        {
+        //if (VisibleToPlayer || FaceDown == false)
+        //{
             if (CardTitle != null && CardTitleDisplay != null)
             { 
                 CardTitleDisplay.SetActive(true);
@@ -91,7 +91,7 @@ public class MainCard : MonoBehaviour
                 var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
                 cardDescriptionDisplayObject.text = CardDescription;
             }
-        }
+        //}
 
     }
 
