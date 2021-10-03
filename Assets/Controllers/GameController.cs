@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Linq;
+using UnityEngine.Networking;
+using SimpleJSON;
+using System.Security.Cryptography;
 
 public class GameController : MonoBehaviour
 {
@@ -77,9 +80,48 @@ public class GameController : MonoBehaviour
     GameObject terrainDeckGraphic;
     DeckScript terrainDeckScript;
 
+    string userID;
+    string serverAddress = "http://raspberrypi:8123/";
+
+    GameData previousData;
+    GameData currentData;
+
+    int[] terrainDeckShuffleIndex;
+    int[] playDeckShuffleIndex;
+
+    bool player1;
+
+    class GameData
+    {
+        public int turn;
+        public int round;
+        public bool reveal;
+        public int playerPlayCard = -1;
+        public int opponentPlayCard = -1;
+        public int playerRevealCard = -1;
+        public int opponentRevealCard = -1;
+    }
+
+    private static readonly RNGCryptoServiceProvider random = new RNGCryptoServiceProvider();
+
+    private string GenerateUniqueID(int length)
+    {
+        // We chose an encoding that fits 6 bits into every character,
+        // so we can fit length*6 bits in total.
+        // Each byte is 8 bits, so...
+        int sufficientBufferSizeInBytes = (length * 6 + 7) / 8;
+
+        var buffer = new byte[sufficientBufferSizeInBytes];
+        random.GetBytes(buffer);
+        return Convert.ToBase64String(buffer).Substring(0, length);
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        previousData = new GameData();
+        currentData = new GameData();
+
         scoreTextAI = GameObject.Find("ScoreTextAI");
         scoreTextAI.SetActive(false);
         scoreTextPlayer = GameObject.Find("ScoreTextPlayer");
@@ -104,11 +146,130 @@ public class GameController : MonoBehaviour
         terrainDeckGraphic = GameObject.Find("TerrainDeck");
         terrainDeckScript = terrainDeckGraphic.GetComponent<DeckScript>();
 
+        userID = GenerateUniqueID(10);
+
+        StartCoroutine(SetUserID(serverAddress, userID));
+    }
+
+    void ProcessGameData(string rawResponse)
+    {
+        JSONNode node = JSON.Parse(rawResponse);
+
+        currentData.turn = node["turn"];
+        currentData.round = node["round"];
+        currentData.reveal = node["reveal"];
+
+        if (userID == node["player1UID"])
+        {
+            currentData.playerPlayCard = node["player1PlayCard"];
+            currentData.playerRevealCard = node["player1RevealCard"];
+            currentData.opponentPlayCard = node["player2PlayCard"];
+            currentData.opponentRevealCard = node["player2RevealCard"];
+        }
+        else
+        {
+            currentData.playerPlayCard = node["player2PlayCard"];
+            currentData.playerRevealCard = node["player2RevealCard"];
+            currentData.opponentPlayCard = node["player1PlayCard"];
+            currentData.opponentRevealCard = node["player1RevealCard"];
+        }
+
+        
+        //check if opponent played a card
+        if (currentData.opponentPlayCard >= 0 && currentData.opponentPlayCard != previousData.opponentPlayCard)
+        {
+            OpponentPlayCardFromHand(currentData.opponentPlayCard);
+        }
+        
+        //check if opponent revealed a card
+        if (currentData.opponentRevealCard >= 0 && currentData.opponentRevealCard != previousData.opponentRevealCard)
+        {
+            OpponentRevealACard(currentData.opponentRevealCard);
+        }
+
+        previousData.turn = currentData.turn;
+        previousData.round = currentData.round;
+        previousData.reveal = currentData.reveal;
+        previousData.playerPlayCard = currentData.playerPlayCard;
+        previousData.opponentPlayCard = currentData.opponentPlayCard;
+        previousData.playerRevealCard = currentData.playerRevealCard;
+        previousData.opponentRevealCard = currentData.opponentRevealCard;
+    }
+
+    IEnumerator PollWebData(string address)
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(1f);
+
+            UnityWebRequest www = UnityWebRequest.Get(address + "gamedata");
+
+            yield return www.SendWebRequest();
+
+            if (www.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Something went wrong" + www.error);
+            }
+            else
+            {
+                Debug.Log(www.downloadHandler.text);
+                ProcessGameData(www.downloadHandler.text);
+            }
+        }
+    }
+
+    IEnumerator SetUserID(string address, string userID)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(address + "setUserID/" + userID);
+
+        yield return www.SendWebRequest();
+
+        JSONNode node = JSON.Parse(www.downloadHandler.text);
+
+        if (userID == node["player1UID"])
+        {
+            player1 = true;
+        }
+        else
+        {
+            player1 = false;
+        }
+
+        StartCoroutine(GetDeckData(serverAddress));
+    }
+
+    IEnumerator GetDeckData(string address)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(address + "deckData/");
+
+        yield return www.SendWebRequest();
+
+        JSONNode node = JSON.Parse(www.downloadHandler.text);
+
+        terrainDeckShuffleIndex = node["terrainDeck"].Children.Select(t => t[0].AsInt).ToArray();
+        playDeckShuffleIndex = node["playDeck"].Children.Select(t => t[0].AsInt).ToArray();
+
         SetUpGameStart();
+    }
+
+    void SetPlayCard(string address, int playCard)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(address + "setPlayCard/" + userID + "/" + playCard);
+
+        www.SendWebRequest();
+    }
+
+    void SetRevealCard(string address, int revealCard)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(address + "setRevealCard/" + userID + "/" + revealCard);
+
+        www.SendWebRequest();
     }
 
     void SetUpGameStart()
     {
+        StartCoroutine(PollWebData(serverAddress));
+
         playerTerrainsGraphics = new List<MainCard>();
         aiTerrainsGraphics = new List<MainCard>();
         playerHandGraphics = new List<MainCard>();
@@ -133,34 +294,44 @@ public class GameController : MonoBehaviour
 
         aiStrat = new AIStrat();
 
-        tDeck = new TerrainDeck(5);
+        tDeck = new TerrainDeck(5, terrainDeckShuffleIndex);
         terrainDeckScript.deck = tDeck;
 
         playerTerrains = new TerrainArea(true);
-
-        playerTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
-
-        InitTerrain(playerTerrains, true);
-
         aiTerrains = new TerrainArea(false);
 
-        aiTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
+        if (player1)
+        {
+            playerTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
+            aiTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
+        }
+        else
+        {
+            aiTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());
+            playerTerrains.Cards.AddRange(tDeck.DrawCards(3).Cast<TerrainCard>().ToList());            
+        }
 
+        InitTerrain(playerTerrains, true);
         InitTerrain(aiTerrains, false);
 
-        pDeck = new PlayDeck(5);
+        pDeck = new PlayDeck(5, playDeckShuffleIndex);
         playDeckScript.deck = pDeck;
 
         playerHand = new PlayHand(true);
-
-        playerHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
-
-        InitHand(playerHand, true);
-
         aiHand = new PlayHand(false);
 
-        aiHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
+        if(player1)
+        {
+            playerHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
+            aiHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
+        }
+        else
+        {
+            aiHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
+            playerHand.Cards.AddRange(pDeck.DrawCards(drawFirstRound).Cast<PlayCard>().ToList());
+        }        
 
+        InitHand(playerHand, true);
         InitHand(aiHand, false);
 
         playerArea = new PlayArea(true);
@@ -354,28 +525,10 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void PlayCardFromHand(MainCard card)
+    public void OpponentPlayCardFromHand(int aiIndex)
     {
-        //get index of selected card
-        int index = playerHandGraphics.IndexOf(card);
-
-        // move card to play area
-        card.MoveToPosition(new Vector3(-6 + (1.75f * turnCounter), -1f, 0));
-        card.FaceDown = true;
-        card.Selectable = false;
-
-        //move reference in list
-        playerHandGraphics.Remove(card);
-        playerAreaGraphics.Add(card);
-
-        //respace cards
-        SpaceCardsInHand(playerHandGraphics, true);
-
-        //move card in data
-        playerArea.Cards.Add(playerHand.SelectCard(index));
-
         //ai plays card
-        var aiIndex = aiStrat.GetNextPlayPick(aiHand, aiTerrains, aiArea, playerArea, playerTerrains, (turnsInCurrentRound - 1) - turnCounter);
+        //var aiIndex = aiStrat.GetNextPlayPick(aiHand, aiTerrains, aiArea, playerArea, playerTerrains, (turnsInCurrentRound - 1) - turnCounter);
 
         //get card reference
         var aiCard = aiHandGraphics[aiIndex];
@@ -393,6 +546,32 @@ public class GameController : MonoBehaviour
 
         //move card in data
         aiArea.Cards.Add(aiHand.SelectCard(aiIndex));
+    }
+
+    public void PlayCardFromHand(MainCard card)
+    {
+        //get index of selected card
+        int index = playerHandGraphics.IndexOf(card);
+
+        //tell server what you played
+        SetPlayCard(serverAddress, index);
+
+        // move card to play area
+        card.MoveToPosition(new Vector3(-6 + (1.75f * turnCounter), -1f, 0));
+        card.FaceDown = true;
+        card.Selectable = false;
+
+        //move reference in list
+        playerHandGraphics.Remove(card);
+        playerAreaGraphics.Add(card);
+
+        //respace cards
+        SpaceCardsInHand(playerHandGraphics, true);
+
+        //move card in data
+        playerArea.Cards.Add(playerHand.SelectCard(index));
+
+        
 
         if (turnCounter < turnsInCurrentRound - 1)
         {
@@ -443,31 +622,10 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void RevealACard(MainCard card)
+    public void OpponentRevealACard(int revealIndex)
     {
-        //get index of selected card
-        if(aiTerrainsGraphics.Contains(card))
-        {
-            //get index of selected card
-            int index = aiTerrainsGraphics.IndexOf(card);
-
-            // reveal the card in the data
-            aiTerrains.Cards[index].Reveal();
-        }
-        else //it was from the play area
-        {
-            //get index of selected card
-            int index = aiAreaGraphics.IndexOf(card);
-
-            //reveal the card in the data
-            aiArea.Cards[index].Reveal();
-        }
-
-        //reveal the graphics
-        card.FaceDown = false;
-
         //ai reveals a card
-        var revealIndex = aiStrat.GetNextRevealPick(playerArea, playerTerrains);
+        //var revealIndex = aiStrat.GetNextRevealPick(playerArea, playerTerrains);
 
         //reveal the card in data and in graphics
         if (revealIndex < playerArea.Cards.Count)
@@ -480,6 +638,35 @@ public class GameController : MonoBehaviour
             playerTerrains.Cards[revealIndex - playerArea.Cards.Count].Reveal();
             playerTerrainsGraphics[revealIndex - playerArea.Cards.Count].FaceDown = false;
         }
+    }
+
+    public void RevealACard(MainCard card)
+    {
+        int index;
+        //get index of selected card
+        if(aiTerrainsGraphics.Contains(card))
+        {
+            //get index of selected card
+            index = aiTerrainsGraphics.IndexOf(card);
+
+            // reveal the card in the data
+            aiTerrains.Cards[index].Reveal();
+
+            index += aiAreaGraphics.Count;
+        }
+        else //it was from the play area
+        {
+            //get index of selected card
+            index = aiAreaGraphics.IndexOf(card);
+
+            //reveal the card in the data
+            aiArea.Cards[index].Reveal();
+        }
+
+        SetRevealCard(serverAddress, index);
+
+        //reveal the graphics
+        card.FaceDown = false;        
 
         //make player hand not selectable
         foreach (var cardGraphic in playerHandGraphics)
