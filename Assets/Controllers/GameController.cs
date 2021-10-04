@@ -81,7 +81,7 @@ public class GameController : MonoBehaviour
     DeckScript terrainDeckScript;
 
     string userID;
-    string serverAddress = "http://raspberrypi:8123/";
+    string serverAddress = "http://mikerbloom1.asuscomm.com:8123/";
 
     GameData previousData;
     GameData currentData;
@@ -90,12 +90,13 @@ public class GameController : MonoBehaviour
     int[] playDeckShuffleIndex;
 
     bool player1;
+    bool pollingIsRunning;
 
     class GameData
     {
-        public int turn;
-        public int round;
-        public bool reveal;
+        public int turn = 1;
+        public int round = 1;
+        public bool reveal = false;
         public int playerPlayCard = -1;
         public int opponentPlayCard = -1;
         public int playerRevealCard = -1;
@@ -106,19 +107,26 @@ public class GameController : MonoBehaviour
 
     private string GenerateUniqueID(int length)
     {
-        // We chose an encoding that fits 6 bits into every character,
-        // so we can fit length*6 bits in total.
-        // Each byte is 8 bits, so...
-        int sufficientBufferSizeInBytes = (length * 6 + 7) / 8;
+        string allowedChars = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-        var buffer = new byte[sufficientBufferSizeInBytes];
-        random.GetBytes(buffer);
-        return Convert.ToBase64String(buffer).Substring(0, length);
+        string buildString = "";
+
+        System.Random rand = new System.Random();
+
+        for (int i = 0; i < length; i++)
+        {
+            int randomIndex = (int)(rand.NextDouble() * allowedChars.Length);
+
+            buildString += allowedChars.Substring(randomIndex, 1);
+        }
+
+        return buildString;
     }
 
     // Start is called before the first frame update
     void Start()
     {
+        Application.targetFrameRate = 30;
         previousData = new GameData();
         currentData = new GameData();
 
@@ -187,6 +195,28 @@ public class GameController : MonoBehaviour
             OpponentRevealACard(currentData.opponentRevealCard);
         }
 
+        //go from play to reveal
+        if (currentData.turn == previousData.turn && currentData.reveal != previousData.reveal)
+        {
+            GoToRevealPhase();
+        }
+
+        //go from reveal to next turn play
+        if (currentData.turn != previousData.turn && currentData.round == previousData.round)
+        {
+            GoToNextTurn();
+        }
+
+        if (currentData.round > previousData.round)
+        {
+            SetUpNextRound();
+        }
+
+        if (currentData.round < previousData.round)
+        {
+            RestartGame();
+        }
+
         previousData.turn = currentData.turn;
         previousData.round = currentData.round;
         previousData.reveal = currentData.reveal;
@@ -196,13 +226,13 @@ public class GameController : MonoBehaviour
         previousData.opponentRevealCard = currentData.opponentRevealCard;
     }
 
-    IEnumerator PollWebData(string address)
+    IEnumerator PollWebData(string address, string userID)
     {
         while (true)
         {
             yield return new WaitForSeconds(1f);
 
-            UnityWebRequest www = UnityWebRequest.Get(address + "gamedata");
+            UnityWebRequest www = UnityWebRequest.Get(address + "gamedata/" + userID);
 
             yield return www.SendWebRequest();
 
@@ -230,9 +260,17 @@ public class GameController : MonoBehaviour
         {
             player1 = true;
         }
-        else
+        else if (userID == node["player2UID"])
         {
             player1 = false;
+        }
+        else
+        {
+            //some problem here
+            //try setting UID again
+            StartCoroutine(SetUserID(serverAddress, userID));
+
+            yield break;
         }
 
         StartCoroutine(GetDeckData(serverAddress));
@@ -268,7 +306,11 @@ public class GameController : MonoBehaviour
 
     void SetUpGameStart()
     {
-        StartCoroutine(PollWebData(serverAddress));
+        if (pollingIsRunning == false)
+        {
+            StartCoroutine(PollWebData(serverAddress, userID));
+            pollingIsRunning = true;
+        }
 
         playerTerrainsGraphics = new List<MainCard>();
         aiTerrainsGraphics = new List<MainCard>();
@@ -525,6 +567,53 @@ public class GameController : MonoBehaviour
         }
     }
 
+    public void GoToRevealPhase()
+    {
+        if (turnCounter < turnsInCurrentRound - 1)
+        {
+            //make aiArea and aiTerrain selectable
+            foreach (var cardGraphic in aiAreaGraphics)
+                cardGraphic.Selectable = true;
+
+            foreach (var cardGraphic in aiTerrainsGraphics)
+                cardGraphic.Selectable = true;
+
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Select opponent card to reveal";
+        }
+        else
+        {
+            //reveal all play cards
+            for (int j = 0; j < playerArea.Cards.Count; j++)
+            {
+                playerArea.Cards[j].Reveal();
+                playerAreaGraphics[j].FaceDown = false;
+                aiArea.Cards[j].Reveal();
+                aiAreaGraphics[j].FaceDown = false;
+            }
+
+            if (roundCounter == 1)
+            {
+                //reveal all terrains
+                for (int j = 0; j < playerTerrains.Cards.Count; j++)
+                {
+                    playerTerrains.Cards[j].Reveal();
+                    playerTerrainsGraphics[j].FaceDown = false;
+                    aiTerrains.Cards[j].Reveal();
+                    aiTerrainsGraphics[j].FaceDown = false;
+                }
+            }
+
+            nextButtonScript.ButtonClicked = Proceed;
+            nextButton.SetActive(true);
+            var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
+            ((TextMesh)nextButtonText).text = "Next";
+
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Click next to apply counters";
+        }
+    }
+
     public void OpponentPlayCardFromHand(int aiIndex)
     {
         //ai plays card
@@ -571,55 +660,27 @@ public class GameController : MonoBehaviour
         //move card in data
         playerArea.Cards.Add(playerHand.SelectCard(index));
 
-        
+        //display waiting text
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Waiting for opponent";
 
-        if (turnCounter < turnsInCurrentRound - 1)
-        {
-            //make player hand not selectable
-            foreach (var cardGraphic in playerHandGraphics)
-                cardGraphic.Selectable = false;
+        //make player hand not selectable
+        foreach (var cardGraphic in playerHandGraphics)
+            cardGraphic.Selectable = false;
+    }
 
-            //make aiArea and aiTerrain selectable
-            foreach (var cardGraphic in aiAreaGraphics)
-                cardGraphic.Selectable = true;
+    public void GoToNextTurn()
+    {
+        //make player hand selectable
+        foreach (var cardGraphic in playerHandGraphics)
+            cardGraphic.Selectable = true;
 
-            foreach (var cardGraphic in aiTerrainsGraphics)
-                cardGraphic.Selectable = true;
+        turnCounter++;
+        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        turnDisplayText.text = "Turn " + (turnCounter + 1) + "/" + turnsInCurrentRound;
 
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
-            commandDisplayText.text = "Select opponent card to reveal";
-        }
-        else
-        {
-            //reveal all play cards
-            for (int j = 0; j < playerArea.Cards.Count; j++)
-            {
-                playerArea.Cards[j].Reveal();
-                playerAreaGraphics[j].FaceDown = false;
-                aiArea.Cards[j].Reveal();
-                aiAreaGraphics[j].FaceDown = false;
-            }
-
-            if (roundCounter == 1)
-            {
-                //reveal all terrains
-                for (int j = 0; j < playerTerrains.Cards.Count; j++)
-                {
-                    playerTerrains.Cards[j].Reveal();
-                    playerTerrainsGraphics[j].FaceDown = false;
-                    aiTerrains.Cards[j].Reveal();
-                    aiTerrainsGraphics[j].FaceDown = false;
-                }
-            }
-
-            nextButtonScript.ButtonClicked = Proceed;
-            nextButton.SetActive(true);
-            var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
-            ((TextMesh)nextButtonText).text = "Next";
-
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
-            commandDisplayText.text = "Click next to apply counters";
-        }
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Play card from your hand";
     }
 
     public void OpponentRevealACard(int revealIndex)
@@ -666,25 +727,18 @@ public class GameController : MonoBehaviour
         SetRevealCard(serverAddress, index);
 
         //reveal the graphics
-        card.FaceDown = false;        
+        card.FaceDown = false;
 
-        //make player hand not selectable
-        foreach (var cardGraphic in playerHandGraphics)
-            cardGraphic.Selectable = true;
-
-        //make aiArea and aiTerrain selectable
+        //make aiArea and aiTerrain not selectable
         foreach (var cardGraphic in aiAreaGraphics)
             cardGraphic.Selectable = false;
 
         foreach (var cardGraphic in aiTerrainsGraphics)
             cardGraphic.Selectable = false;
 
-        turnCounter++;
-        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
-        turnDisplayText.text = "Turn " + (turnCounter + 1) + "/" + turnsInCurrentRound;
-
+        //display waiting text
         var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
-        commandDisplayText.text = "Play card from your hand";
+        commandDisplayText.text = "Waiting for opponent";
     }
 
     public void applyCounters(PlayArea area1, PlayArea area2, List<MainCard> area2Graphics)
@@ -729,6 +783,16 @@ public class GameController : MonoBehaviour
         }
     }
 
+    public void SendReady(ButtonScript button)
+    {
+        UnityWebRequest www = UnityWebRequest.Get(serverAddress + "setReady/" + userID);
+
+        www.SendWebRequest();
+
+        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        commandDisplayText.text = "Waiting for opponent";
+    }
+
     public void Proceed(ButtonScript button)
     {
         applyCounters(playerArea, aiArea, aiAreaGraphics);
@@ -736,7 +800,7 @@ public class GameController : MonoBehaviour
 
         if (roundCounter == 0)
         {
-            nextButtonScript.ButtonClicked = SetUpNextTurn;
+            nextButtonScript.ButtonClicked = SendReady;
             var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
             commandDisplayText.text = "Click next to start next round";
         }
@@ -748,7 +812,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void SetUpNextTurn(ButtonScript button)
+    public void SetUpNextRound()
     {
         turnCounter = 0;
         roundCounter = 1;
@@ -790,8 +854,16 @@ public class GameController : MonoBehaviour
         }
 
         //draw cards for second round
-        playerHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
-        aiHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
+        if (player1)
+        {
+            playerHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
+            aiHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
+        }
+        else
+        {
+            aiHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
+            playerHand.Cards.AddRange(pDeck.DrawCards(drawSecondRound).Cast<PlayCard>().ToList());
+        }
 
         //refresh hands
         //foreach (var graphic in aiHandGraphics)
@@ -805,6 +877,10 @@ public class GameController : MonoBehaviour
         //playerHandGraphics = new List<MainCard>();
 
         InitHand(playerHand, true);
+
+        //make player hand selectable
+        foreach (var cardGraphic in playerHandGraphics)
+            cardGraphic.Selectable = true;
     }
 
     public void FinishGame(ButtonScript button)
@@ -856,10 +932,10 @@ public class GameController : MonoBehaviour
 
         var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
         ((TextMesh)nextButtonText).text = "Restart";
-        nextButtonScript.ButtonClicked = RestartGame;
+        nextButtonScript.ButtonClicked = SendReady;
     }
 
-    public void RestartGame(ButtonScript button)
+    public void RestartGame()
     {
         nextButton.SetActive(false);
         scoreTextAI.SetActive(false);
@@ -904,7 +980,8 @@ public class GameController : MonoBehaviour
             Destroy(graphic.gameObject);
         playerScorePileGraphics = new List<MainCard>();
 
-        SetUpGameStart();
+        StartCoroutine(GetDeckData(serverAddress));
+        //SetUpGameStart();
     }
 
     public void ShowScorePile(ScorePile pile, bool player)

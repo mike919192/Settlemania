@@ -23,6 +23,8 @@ public class MenuController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Application.targetFrameRate = 30;
+
         playButton = GameObject.Find("PlayButton");
         playButtonScript = playButton.GetComponent<ButtonScript>();
         playButtonScript.ButtonClicked = PlayButton;
