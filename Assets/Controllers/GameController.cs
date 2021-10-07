@@ -183,17 +183,7 @@ public class GameController : MonoBehaviour
         }
 
         
-        //check if opponent played a card
-        if (currentData.opponentPlayCard >= 0 && currentData.opponentPlayCard != previousData.opponentPlayCard)
-        {
-            OpponentPlayCardFromHand(currentData.opponentPlayCard);
-        }
         
-        //check if opponent revealed a card
-        if (currentData.opponentRevealCard >= 0 && currentData.opponentRevealCard != previousData.opponentRevealCard)
-        {
-            OpponentRevealACard(currentData.opponentRevealCard);
-        }
 
         //go from play to reveal
         if (currentData.turn == previousData.turn && currentData.reveal != previousData.reveal)
@@ -217,6 +207,18 @@ public class GameController : MonoBehaviour
             RestartGame();
         }
 
+        //check if opponent played a card
+        if (currentData.opponentPlayCard >= 0 && currentData.opponentPlayCard != previousData.opponentPlayCard)
+        {
+            OpponentPlayCardFromHand(currentData.opponentPlayCard);
+        }
+
+        //check if opponent revealed a card
+        if (currentData.opponentRevealCard >= 0 && currentData.opponentRevealCard != previousData.opponentRevealCard)
+        {
+            OpponentRevealACard(currentData.opponentRevealCard);
+        }
+
         previousData.turn = currentData.turn;
         previousData.round = currentData.round;
         previousData.reveal = currentData.reveal;
@@ -224,6 +226,35 @@ public class GameController : MonoBehaviour
         previousData.opponentPlayCard = currentData.opponentPlayCard;
         previousData.playerRevealCard = currentData.playerRevealCard;
         previousData.opponentRevealCard = currentData.opponentRevealCard;
+    }
+
+    void SendGameData(string address, string userID)
+    {
+        UnityWebRequest www;
+        if (player1)
+            www = UnityWebRequest.Get(serverAddress +
+                "sendGameData/" + 
+                userID + "/" + 
+                currentData.turn + "/" + 
+                currentData.round + "/" + 
+                currentData.reveal + "/" + 
+                currentData.playerPlayCard + "/" + 
+                currentData.playerRevealCard + "/" + 
+                currentData.opponentPlayCard + "/" + 
+                currentData.opponentRevealCard);
+        else
+            www = UnityWebRequest.Get(serverAddress +
+                "sendGameData/" +
+                userID + "/" +
+                currentData.turn + "/" +
+                currentData.round + "/" +
+                currentData.reveal + "/" +
+                currentData.opponentPlayCard + "/" +
+                currentData.opponentRevealCard + "/" +
+                currentData.playerPlayCard + "/" +
+                currentData.playerRevealCard);
+
+        www.SendWebRequest();
     }
 
     IEnumerator PollWebData(string address, string userID)
@@ -244,6 +275,7 @@ public class GameController : MonoBehaviour
             {
                 Debug.Log(www.downloadHandler.text);
                 ProcessGameData(www.downloadHandler.text);
+                SendGameData(address, userID);
             }
         }
     }
