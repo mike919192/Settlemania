@@ -28,7 +28,9 @@ public class MenuController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        Application.targetFrameRate = 30;
+        #if !UNITY_WEBGL
+            Application.targetFrameRate = 30;
+        #endif
 
         playButton = GameObject.Find("PlayButton");
         playButtonScript = playButton.GetComponent<ButtonScript>();

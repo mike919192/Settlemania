@@ -82,7 +82,7 @@ public class GameController : MonoBehaviour
     DeckScript terrainDeckScript;
 
     string userID;
-    string serverAddress = "http://mikerbloom1.asuscomm.com:8123/";
+    string serverAddress = "https://mikerbloom1.asuscomm.com:8123/";
 
     GameData previousData;
     GameData currentData;
@@ -138,7 +138,10 @@ public class GameController : MonoBehaviour
 
         SceneManager.UnloadSceneAsync("Menu");
 
-        Application.targetFrameRate = 30;
+        #if !UNITY_WEBGL
+            Application.targetFrameRate = 30;
+        #endif
+        
         previousData = new GameData();
         currentData = new GameData();
 
@@ -700,8 +703,11 @@ public class GameController : MonoBehaviour
         //get index of selected card
         int index = playerHandGraphics.IndexOf(card);
 
-        //tell server what you played
-        SetPlayCard(serverAddress, index);
+        if (isMulti)
+        {
+            //tell server what you played
+            SetPlayCard(serverAddress, index);
+        }
 
         // move card to play area
         card.MoveToPosition(new Vector3(-6 + (1.75f * turnCounter), -1f, 0));
@@ -794,7 +800,11 @@ public class GameController : MonoBehaviour
             aiArea.Cards[index].Reveal();
         }
 
-        SetRevealCard(serverAddress, index);
+        if (isMulti)
+        {
+            //tell server about reveal card
+            SetRevealCard(serverAddress, index);
+        }
 
         //reveal the graphics
         card.FaceDown = false;
@@ -1068,8 +1078,10 @@ public class GameController : MonoBehaviour
             Destroy(graphic.gameObject);
         playerScorePileGraphics = new List<MainCard>();
 
-        StartCoroutine(GetDeckData(serverAddress));
-        //SetUpGameStart();
+        if (isMulti)
+            StartCoroutine(GetDeckData(serverAddress));
+        else
+            SetUpGameStart();
     }
 
     public void ShowScorePile(ScorePile pile, bool player)
