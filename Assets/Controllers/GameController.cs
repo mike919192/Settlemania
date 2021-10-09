@@ -6,6 +6,7 @@ using System.Linq;
 using UnityEngine.Networking;
 using SimpleJSON;
 using System.Security.Cryptography;
+using UnityEngine.SceneManagement;
 
 public class GameController : MonoBehaviour
 {
@@ -89,8 +90,9 @@ public class GameController : MonoBehaviour
     int[] terrainDeckShuffleIndex;
     int[] playDeckShuffleIndex;
 
-    bool player1;
+    bool player1 = true;
     bool pollingIsRunning;
+    bool isMulti;
 
     class GameData
     {
@@ -126,6 +128,16 @@ public class GameController : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        var menuScene = SceneManager.GetSceneByName("Menu");
+
+        var menuSceneObjects = menuScene.GetRootGameObjects();
+
+        var menuCont = menuSceneObjects.First(t => t.name == "MenuController").GetComponent(typeof(MenuController));
+
+        isMulti = ((MenuController)menuCont).isMulti;
+
+        SceneManager.UnloadSceneAsync("Menu");
+
         Application.targetFrameRate = 30;
         previousData = new GameData();
         currentData = new GameData();
@@ -154,9 +166,15 @@ public class GameController : MonoBehaviour
         terrainDeckGraphic = GameObject.Find("TerrainDeck");
         terrainDeckScript = terrainDeckGraphic.GetComponent<DeckScript>();
 
-        userID = GenerateUniqueID(10);
-
-        StartCoroutine(SetUserID(serverAddress, userID));
+        if (isMulti)
+        {
+            userID = GenerateUniqueID(10);
+            StartCoroutine(SetUserID(serverAddress, userID));
+        }
+        else
+        {
+            SetUpGameStart();
+        }
     }
 
     void ProcessGameData(string rawResponse)
@@ -199,12 +217,12 @@ public class GameController : MonoBehaviour
 
         if (currentData.round > previousData.round)
         {
-            SetUpNextRound();
+            SetUpNextRound(null);
         }
 
         if (currentData.round < previousData.round)
         {
-            RestartGame();
+            RestartGame(null);
         }
 
         //check if opponent played a card
@@ -338,7 +356,7 @@ public class GameController : MonoBehaviour
 
     void SetUpGameStart()
     {
-        if (pollingIsRunning == false)
+        if (isMulti && pollingIsRunning == false)
         {
             StartCoroutine(PollWebData(serverAddress, userID));
             pollingIsRunning = true;
@@ -368,7 +386,11 @@ public class GameController : MonoBehaviour
 
         aiStrat = new AIStrat();
 
-        tDeck = new TerrainDeck(5, terrainDeckShuffleIndex);
+        if (isMulti)
+            tDeck = new TerrainDeck(5, terrainDeckShuffleIndex);
+        else
+            tDeck = new TerrainDeck(5);
+
         terrainDeckScript.deck = tDeck;
 
         playerTerrains = new TerrainArea(true);
@@ -388,7 +410,11 @@ public class GameController : MonoBehaviour
         InitTerrain(playerTerrains, true);
         InitTerrain(aiTerrains, false);
 
-        pDeck = new PlayDeck(5, playDeckShuffleIndex);
+        if (isMulti)
+            pDeck = new PlayDeck(5, playDeckShuffleIndex);
+        else
+            pDeck = new PlayDeck(5);
+
         playDeckScript.deck = pDeck;
 
         playerHand = new PlayHand(true);
@@ -690,15 +716,27 @@ public class GameController : MonoBehaviour
         SpaceCardsInHand(playerHandGraphics, true);
 
         //move card in data
-        playerArea.Cards.Add(playerHand.SelectCard(index));
-
-        //display waiting text
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
-        commandDisplayText.text = "Waiting for opponent";
+        playerArea.Cards.Add(playerHand.SelectCard(index));        
 
         //make player hand not selectable
         foreach (var cardGraphic in playerHandGraphics)
             cardGraphic.Selectable = false;
+
+        if (isMulti)
+        {
+            //display waiting text
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Waiting for opponent";
+        }
+        else
+        {
+            //ai plays card
+            var aiIndex = aiStrat.GetNextPlayPick(aiHand, aiTerrains, aiArea, playerArea, playerTerrains, (turnsInCurrentRound - 1) - turnCounter);
+
+            OpponentPlayCardFromHand(aiIndex);
+
+            GoToRevealPhase();
+        }
     }
 
     public void GoToNextTurn()
@@ -768,9 +806,21 @@ public class GameController : MonoBehaviour
         foreach (var cardGraphic in aiTerrainsGraphics)
             cardGraphic.Selectable = false;
 
-        //display waiting text
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
-        commandDisplayText.text = "Waiting for opponent";
+        if (isMulti)
+        {
+            //display waiting text
+            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            commandDisplayText.text = "Waiting for opponent";
+        }
+        else
+        {
+            //ai reveals a card
+            var revealIndex = aiStrat.GetNextRevealPick(playerArea, playerTerrains);
+
+            OpponentRevealACard(revealIndex);
+
+            GoToNextTurn();
+        }
     }
 
     public void applyCounters(PlayArea area1, PlayArea area2, List<MainCard> area2Graphics)
@@ -832,7 +882,10 @@ public class GameController : MonoBehaviour
 
         if (roundCounter == 0)
         {
-            nextButtonScript.ButtonClicked = SendReady;
+            if (isMulti)
+                nextButtonScript.ButtonClicked = SendReady;
+            else
+                nextButtonScript.ButtonClicked = SetUpNextRound;
             var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
             commandDisplayText.text = "Click next to start next round";
         }
@@ -844,7 +897,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void SetUpNextRound()
+    public void SetUpNextRound(ButtonScript button)
     {
         turnCounter = 0;
         roundCounter = 1;
@@ -964,10 +1017,13 @@ public class GameController : MonoBehaviour
 
         var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
         ((TextMesh)nextButtonText).text = "Restart";
-        nextButtonScript.ButtonClicked = SendReady;
+        if (isMulti)
+            nextButtonScript.ButtonClicked = SendReady;
+        else
+            nextButtonScript.ButtonClicked = RestartGame;
     }
 
-    public void RestartGame()
+    public void RestartGame(ButtonScript button)
     {
         nextButton.SetActive(false);
         scoreTextAI.SetActive(false);

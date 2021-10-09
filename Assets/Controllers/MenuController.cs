@@ -8,6 +8,9 @@ public class MenuController : MonoBehaviour
     GameObject playButton;
     ButtonScript playButtonScript;
 
+    GameObject multiButton;
+    ButtonScript multiButtonScript;
+
     GameObject helpButton;
     ButtonScript helpButtonScript;
 
@@ -20,6 +23,8 @@ public class MenuController : MonoBehaviour
     GameObject guide4Sprite;
     ButtonScript guide4Script;
 
+    public bool isMulti;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -28,6 +33,10 @@ public class MenuController : MonoBehaviour
         playButton = GameObject.Find("PlayButton");
         playButtonScript = playButton.GetComponent<ButtonScript>();
         playButtonScript.ButtonClicked = PlayButton;
+
+        playButton = GameObject.Find("MultiButton");
+        playButtonScript = playButton.GetComponent<ButtonScript>();
+        playButtonScript.ButtonClicked = MultiButton;
 
         helpButton = GameObject.Find("HelpButton");
         helpButtonScript = helpButton.GetComponent<ButtonScript>();
@@ -56,7 +65,14 @@ public class MenuController : MonoBehaviour
 
     public void PlayButton(ButtonScript button)
     {
-        SceneManager.LoadScene("SampleScene");
+        isMulti = false;
+        SceneManager.LoadScene("SampleScene", LoadSceneMode.Additive);
+    }
+
+    public void MultiButton(ButtonScript button)
+    {
+        isMulti = true;
+        SceneManager.LoadScene("SampleScene", LoadSceneMode.Additive);        
     }
 
     public void ShowGuide1(ButtonScript button)
