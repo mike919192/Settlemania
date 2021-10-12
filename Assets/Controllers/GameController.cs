@@ -319,6 +319,8 @@ public class GameController : MonoBehaviour
         }
         else
         {
+            yield return new WaitForSeconds(1f);
+
             //some problem here
             //try setting UID again
             StartCoroutine(SetUserID(serverAddress, userID));
