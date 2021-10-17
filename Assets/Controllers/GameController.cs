@@ -82,7 +82,7 @@ public class GameController : MonoBehaviour
     DeckScript terrainDeckScript;
 
     string userID;
-    string serverAddress = "https://mikerbloom1.asuscomm.com:8123/";
+    string serverAddress = "https://mikerbloom1.asuscomm.com:8030/";
 
     GameData previousData;
     GameData currentData;
@@ -98,7 +98,7 @@ public class GameController : MonoBehaviour
     {
         public int turn = 1;
         public int round = 1;
-        public bool reveal = false;
+        public int reveal = 0;
         public int playerPlayCard = -1;
         public int opponentPlayCard = -1;
         public int playerRevealCard = -1;
@@ -130,13 +130,16 @@ public class GameController : MonoBehaviour
     {
         var menuScene = SceneManager.GetSceneByName("Menu");
 
-        var menuSceneObjects = menuScene.GetRootGameObjects();
+        if (menuScene.isLoaded == true)
+        {
+            var menuSceneObjects = menuScene.GetRootGameObjects();
 
-        var menuCont = menuSceneObjects.First(t => t.name == "MenuController").GetComponent(typeof(MenuController));
+            var menuCont = menuSceneObjects.First(t => t.name == "MenuController").GetComponent(typeof(MenuController));
 
-        isMulti = ((MenuController)menuCont).isMulti;
+            isMulti = ((MenuController)menuCont).isMulti;        
 
-        SceneManager.UnloadSceneAsync("Menu");
+            SceneManager.UnloadSceneAsync("Menu");
+        }
 
         #if !UNITY_WEBGL
             Application.targetFrameRate = 30;
@@ -188,7 +191,7 @@ public class GameController : MonoBehaviour
         currentData.round = node["round"];
         currentData.reveal = node["reveal"];
 
-        if (userID == node["player1UID"])
+        if (player1)
         {
             currentData.playerPlayCard = node["player1PlayCard"];
             currentData.playerRevealCard = node["player1RevealCard"];
