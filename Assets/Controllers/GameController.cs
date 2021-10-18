@@ -175,7 +175,7 @@ public class GameController : MonoBehaviour
         if (isMulti)
         {
             userID = GenerateUniqueID(10);
-            StartCoroutine(SetUserID(serverAddress, userID));
+            StartCoroutine(SetUserID());
         }
         else
         {
@@ -252,7 +252,7 @@ public class GameController : MonoBehaviour
         previousData.opponentRevealCard = currentData.opponentRevealCard;
     }
 
-    void SendGameData(string address, string userID)
+    void SendGameData()
     {
         UnityWebRequest www;
         if (player1)
@@ -281,13 +281,13 @@ public class GameController : MonoBehaviour
         www.SendWebRequest();
     }
 
-    IEnumerator PollWebData(string address, string userID)
+    IEnumerator PollWebData()
     {
         while (true)
         {
             yield return new WaitForSeconds(1f);
 
-            UnityWebRequest www = UnityWebRequest.Get(address + "gamedata/" + userID);
+            UnityWebRequest www = UnityWebRequest.Get(serverAddress + "getGameData/" + userID);
 
             yield return www.SendWebRequest();
 
@@ -297,20 +297,39 @@ public class GameController : MonoBehaviour
             }
             else
             {
-                Debug.Log(www.downloadHandler.text);
+                //Debug.Log(www.downloadHandler.text);
                 ProcessGameData(www.downloadHandler.text);
-                SendGameData(address, userID);
+                SendGameData();
+            }
+
+            UnityWebRequest www2 = UnityWebRequest.Get(serverAddress + "getConnectionData/" + userID);
+
+            yield return www2.SendWebRequest();
+
+            if (www2.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Something went wrong" + www2.error);
+            }
+            else
+            {
+                //Debug.Log(www2.downloadHandler.text);
+
             }
         }
     }
 
-    IEnumerator SetUserID(string address, string userID)
+    IEnumerator SetUserID()
     {
-        UnityWebRequest www = UnityWebRequest.Get(address + "setUserID/" + userID);
+        UnityWebRequest www = UnityWebRequest.Get(serverAddress + "setUserID/" + userID);
 
-        yield return www.SendWebRequest();
+        yield return www.SendWebRequest();        
 
         JSONNode node = JSON.Parse(www.downloadHandler.text);
+
+        if (www.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError("Something went wrong " + www.error + " " + node["error"]);
+        }
 
         if (userID == node["player1UID"])
         {
@@ -326,17 +345,17 @@ public class GameController : MonoBehaviour
 
             //some problem here
             //try setting UID again
-            StartCoroutine(SetUserID(serverAddress, userID));
+            StartCoroutine(SetUserID());
 
             yield break;
         }
 
-        StartCoroutine(GetDeckData(serverAddress));
+        StartCoroutine(GetDeckData());
     }
 
-    IEnumerator GetDeckData(string address)
+    IEnumerator GetDeckData()
     {
-        UnityWebRequest www = UnityWebRequest.Get(address + "deckData/");
+        UnityWebRequest www = UnityWebRequest.Get(serverAddress + "getDeckData/" + userID);
 
         yield return www.SendWebRequest();
 
@@ -348,16 +367,16 @@ public class GameController : MonoBehaviour
         SetUpGameStart();
     }
 
-    void SetPlayCard(string address, int playCard)
+    void SetPlayCard(int playCard)
     {
-        UnityWebRequest www = UnityWebRequest.Get(address + "setPlayCard/" + userID + "/" + playCard);
+        UnityWebRequest www = UnityWebRequest.Get(serverAddress + "setPlayCard/" + userID + "/" + playCard);
 
         www.SendWebRequest();
     }
 
-    void SetRevealCard(string address, int revealCard)
+    void SetRevealCard(int revealCard)
     {
-        UnityWebRequest www = UnityWebRequest.Get(address + "setRevealCard/" + userID + "/" + revealCard);
+        UnityWebRequest www = UnityWebRequest.Get(serverAddress + "setRevealCard/" + userID + "/" + revealCard);
 
         www.SendWebRequest();
     }
@@ -366,7 +385,7 @@ public class GameController : MonoBehaviour
     {
         if (isMulti && pollingIsRunning == false)
         {
-            StartCoroutine(PollWebData(serverAddress, userID));
+            StartCoroutine(PollWebData());
             pollingIsRunning = true;
         }
 
@@ -447,12 +466,6 @@ public class GameController : MonoBehaviour
 
         playerScorePile = new ScorePile();
         aiScorePile = new ScorePile();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     void SpaceCardsInHand(List<MainCard> handGraphics, bool player)
@@ -711,7 +724,7 @@ public class GameController : MonoBehaviour
         if (isMulti)
         {
             //tell server what you played
-            SetPlayCard(serverAddress, index);
+            SetPlayCard(index);
         }
 
         // move card to play area
@@ -808,7 +821,7 @@ public class GameController : MonoBehaviour
         if (isMulti)
         {
             //tell server about reveal card
-            SetRevealCard(serverAddress, index);
+            SetRevealCard(index);
         }
 
         //reveal the graphics
@@ -1084,7 +1097,7 @@ public class GameController : MonoBehaviour
         playerScorePileGraphics = new List<MainCard>();
 
         if (isMulti)
-            StartCoroutine(GetDeckData(serverAddress));
+            StartCoroutine(GetDeckData());
         else
             SetUpGameStart();
     }
