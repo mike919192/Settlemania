@@ -7,6 +7,7 @@ using UnityEngine.Networking;
 using SimpleJSON;
 using System.Security.Cryptography;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
@@ -73,7 +74,7 @@ public class GameController : MonoBehaviour
     GameObject roundDisplay;
 
     GameObject nextButton;
-    ButtonScript nextButtonScript;
+    Button nextButtonScript;
 
     GameObject playDeckGraphic;
     DeckScript playDeckScript;
@@ -163,7 +164,7 @@ public class GameController : MonoBehaviour
         roundDisplay = GameObject.Find("RoundDisplay");
 
         nextButton = GameObject.Find("NextButton");
-        nextButtonScript = nextButton.GetComponent<ButtonScript>();
+        nextButtonScript = nextButton.GetComponent<Button>();
         nextButton.SetActive(false);
 
         playDeckGraphic = GameObject.Find("PlayDeck");
@@ -223,12 +224,12 @@ public class GameController : MonoBehaviour
 
         if (currentData.round > previousData.round)
         {
-            SetUpNextRound(null);
+            SetUpNextRound();
         }
 
         if (currentData.round < previousData.round)
         {
-            RestartGame(null);
+            RestartGame();
         }
 
         //check if opponent played a card
@@ -683,10 +684,11 @@ public class GameController : MonoBehaviour
                 }
             }
 
-            nextButtonScript.ButtonClicked = Proceed;
+            nextButtonScript.onClick.RemoveAllListeners();
+            nextButtonScript.onClick.AddListener(delegate { Proceed(); });
             nextButton.SetActive(true);
-            var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
-            ((TextMesh)nextButtonText).text = "Next";
+            var nextButtonText = nextButton.GetComponentInChildren(typeof(Text));
+            ((Text)nextButtonText).text = "Next";
 
             var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
             commandDisplayText.text = "Click next to apply counters";
@@ -893,7 +895,7 @@ public class GameController : MonoBehaviour
         }
     }
 
-    public void SendReady(ButtonScript button)
+    public void SendReady()
     {
         UnityWebRequest www = UnityWebRequest.Get(serverAddress + "setReady/" + userID);
 
@@ -903,29 +905,32 @@ public class GameController : MonoBehaviour
         commandDisplayText.text = "Waiting for opponent";
     }
 
-    public void Proceed(ButtonScript button)
+    public void Proceed()
     {
         applyCounters(playerArea, aiArea, aiAreaGraphics);
         applyCounters(aiArea, playerArea, playerAreaGraphics);
 
         if (roundCounter == 0)
         {
+            nextButtonScript.onClick.RemoveAllListeners();
             if (isMulti)
-                nextButtonScript.ButtonClicked = SendReady;
+                nextButtonScript.onClick.AddListener(delegate { SendReady(); });
             else
-                nextButtonScript.ButtonClicked = SetUpNextRound;
+                nextButtonScript.onClick.AddListener(delegate { SetUpNextRound(); });
+
             var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
             commandDisplayText.text = "Click next to start next round";
         }
         else
         {
-            nextButtonScript.ButtonClicked = FinishGame;
+            nextButtonScript.onClick.RemoveAllListeners();
+            nextButtonScript.onClick.AddListener(delegate { FinishGame(); });
             var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
             commandDisplayText.text = "Click next to calculate score";
         }
     }
 
-    public void SetUpNextRound(ButtonScript button)
+    public void SetUpNextRound()
     {
         turnCounter = 0;
         roundCounter = 1;
@@ -996,7 +1001,7 @@ public class GameController : MonoBehaviour
             cardGraphic.Selectable = true;
     }
 
-    public void FinishGame(ButtonScript button)
+    public void FinishGame()
     {
         turnCounter = 0;
         roundCounter = 2;
@@ -1043,15 +1048,17 @@ public class GameController : MonoBehaviour
         var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
         commandDisplayText.text = "Click restart to play again";
 
-        var nextButtonText = nextButton.GetComponentInChildren(typeof(TextMesh));
-        ((TextMesh)nextButtonText).text = "Restart";
+        var nextButtonText = nextButton.GetComponentInChildren(typeof(Text));
+        ((Text)nextButtonText).text = "Restart";
+
+        nextButtonScript.onClick.RemoveAllListeners();
         if (isMulti)
-            nextButtonScript.ButtonClicked = SendReady;
+            nextButtonScript.onClick.AddListener(delegate { SendReady(); });
         else
-            nextButtonScript.ButtonClicked = RestartGame;
+            nextButtonScript.onClick.AddListener(delegate { RestartGame(); });
     }
 
-    public void RestartGame(ButtonScript button)
+    public void RestartGame()
     {
         nextButton.SetActive(false);
         scoreTextAI.SetActive(false);
