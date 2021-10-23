@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DeckScript : MonoBehaviour
 {
@@ -26,22 +27,22 @@ public class DeckScript : MonoBehaviour
     public void OnMouseEnter()
     {
         CardTitleDisplay.SetActive(true);
-        var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+        var cardTitleDisplayObject = CardTitleDisplay.GetComponent<Text>();
         cardTitleDisplayObject.text = DeckTitle;
 
         CardDescriptionDisplay.SetActive(true);
-        var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+        var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<Text>();
         cardDescriptionDisplayObject.text = deck.CardCount.ToString() + " cards";
     }
 
     public void OnMouseExit()
     {
         CardTitleDisplay.SetActive(false);
-        var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+        var cardTitleDisplayObject = CardTitleDisplay.GetComponent<Text>();
         cardTitleDisplayObject.text = "";
 
         CardDescriptionDisplay.SetActive(false);
-        var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+        var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<Text>();
         cardDescriptionDisplayObject.text = "";
     }
 

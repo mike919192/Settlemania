@@ -403,13 +403,13 @@ public class GameController : MonoBehaviour
         roundCounter = 0;
         turnsInCurrentRound = firstRoundTurns;
 
-        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        var turnDisplayText = turnDisplay.GetComponent<Text>();
         turnDisplayText.text = "Turn " + "1/" + turnsInCurrentRound;
 
-        var roundDisplayText = roundDisplay.GetComponent<TextMesh>();
+        var roundDisplayText = roundDisplay.GetComponent<Text>();
         roundDisplayText.text = "Round 1/2";
 
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        var commandDisplayText = commandDisplay.GetComponent<Text>();
         commandDisplayText.text = "Play card from your hand";
 
         aiStrat = new AIStrat();
@@ -658,7 +658,7 @@ public class GameController : MonoBehaviour
             foreach (var cardGraphic in aiTerrainsGraphics)
                 cardGraphic.Selectable = true;
 
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Select opponent card to reveal";
         }
         else
@@ -690,7 +690,7 @@ public class GameController : MonoBehaviour
             var nextButtonText = nextButton.GetComponentInChildren(typeof(Text));
             ((Text)nextButtonText).text = "Next";
 
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Click next to apply counters";
         }
     }
@@ -751,7 +751,7 @@ public class GameController : MonoBehaviour
         if (isMulti)
         {
             //display waiting text
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Waiting for opponent";
         }
         else
@@ -772,10 +772,10 @@ public class GameController : MonoBehaviour
             cardGraphic.Selectable = true;
 
         turnCounter++;
-        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        var turnDisplayText = turnDisplay.GetComponent<Text>();
         turnDisplayText.text = "Turn " + (turnCounter + 1) + "/" + turnsInCurrentRound;
 
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        var commandDisplayText = commandDisplay.GetComponent<Text>();
         commandDisplayText.text = "Play card from your hand";
     }
 
@@ -839,7 +839,7 @@ public class GameController : MonoBehaviour
         if (isMulti)
         {
             //display waiting text
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Waiting for opponent";
         }
         else
@@ -901,7 +901,7 @@ public class GameController : MonoBehaviour
 
         www.SendWebRequest();
 
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        var commandDisplayText = commandDisplay.GetComponent<Text>();
         commandDisplayText.text = "Waiting for opponent";
     }
 
@@ -918,14 +918,14 @@ public class GameController : MonoBehaviour
             else
                 nextButtonScript.onClick.AddListener(delegate { SetUpNextRound(); });
 
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Click next to start next round";
         }
         else
         {
             nextButtonScript.onClick.RemoveAllListeners();
             nextButtonScript.onClick.AddListener(delegate { FinishGame(); });
-            var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+            var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Click next to calculate score";
         }
     }
@@ -936,13 +936,13 @@ public class GameController : MonoBehaviour
         roundCounter = 1;
         turnsInCurrentRound = secondRoundTurns;
 
-        var turnDisplayText = turnDisplay.GetComponent<TextMesh>();
+        var turnDisplayText = turnDisplay.GetComponent<Text>();
         turnDisplayText.text = "Turn " + "1/" + turnsInCurrentRound;
 
-        var roundDisplayText = roundDisplay.GetComponent<TextMesh>();
+        var roundDisplayText = roundDisplay.GetComponent<Text>();
         roundDisplayText.text = "Round 2/2";
 
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        var commandDisplayText = commandDisplay.GetComponent<Text>();
         commandDisplayText.text = "Play card from your hand";
 
         nextButton.SetActive(false);
@@ -1037,15 +1037,15 @@ public class GameController : MonoBehaviour
         //var scoreTextAI = GameObject.Find("ScoreTextAI");
         //var scoreTextPlayer = GameObject.Find("ScoreTextPlayer");
 
-        var scoreTextAIObject = scoreTextAI.GetComponent<TextMesh>();
+        var scoreTextAIObject = scoreTextAI.GetComponent<Text>();
         scoreTextAIObject.text = "Points: " + aiScorePile.CountScore(aiTerrains).ToString();
         scoreTextAI.SetActive(true);
 
-        var scoreTextPlayerObject = scoreTextPlayer.GetComponent<TextMesh>();
+        var scoreTextPlayerObject = scoreTextPlayer.GetComponent<Text>();
         scoreTextPlayerObject.text = "Points: " + playerScorePile.CountScore(playerTerrains).ToString();
         scoreTextPlayer.SetActive(true);
 
-        var commandDisplayText = commandDisplay.GetComponent<TextMesh>();
+        var commandDisplayText = commandDisplay.GetComponent<Text>();
         commandDisplayText.text = "Click restart to play again";
 
         var nextButtonText = nextButton.GetComponentInChildren(typeof(Text));

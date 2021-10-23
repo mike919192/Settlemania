@@ -19,7 +19,7 @@ public class ButtonScript : MonoBehaviour
         
     }
 
-    public void OnMouseDown()
+    public void OnMouseUp()
     {
         ButtonClicked(this);
     }

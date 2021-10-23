@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.UI;
 
 public class MainCard : MonoBehaviour
 {
@@ -82,13 +83,13 @@ public class MainCard : MonoBehaviour
             if (CardTitle != null && CardTitleDisplay != null)
             { 
                 CardTitleDisplay.SetActive(true);
-                var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+                var cardTitleDisplayObject = CardTitleDisplay.GetComponent<Text>();
                 cardTitleDisplayObject.text = CardTitle;
             }
             if (CardDescription != null && CardDescriptionDisplay != null)
             {
                 CardDescriptionDisplay.SetActive(true);
-                var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+                var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<Text>();
                 cardDescriptionDisplayObject.text = CardDescription;
             }
         }
@@ -108,14 +109,14 @@ public class MainCard : MonoBehaviour
         if (CardTitleDisplay != null)
         {
             CardTitleDisplay.SetActive(false);
-            var cardTitleDisplayObject = CardTitleDisplay.GetComponent<TextMesh>();
+            var cardTitleDisplayObject = CardTitleDisplay.GetComponent<Text>();
             cardTitleDisplayObject.text = "";
         }
 
         if (CardDescriptionDisplay != null)
         {
             CardDescriptionDisplay.SetActive(false);
-            var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<TextMesh>();
+            var cardDescriptionDisplayObject = CardDescriptionDisplay.GetComponent<Text>();
             cardDescriptionDisplayObject.text = "";
         }
     }
