@@ -95,6 +95,9 @@ public class GameController : MonoBehaviour
     bool pollingIsRunning;
     bool isMulti;
 
+    string terrainTopDeckCards;
+    string handTopDeckCards;
+
     class GameData
     {
         public int turn = 1;
@@ -414,7 +417,9 @@ public class GameController : MonoBehaviour
 
         aiStrat = new AIStrat();
 
-        if (isMulti)
+        if (terrainTopDeckCards != null)
+            tDeck = new TerrainDeck(5, terrainTopDeckCards);
+        else if (terrainDeckShuffleIndex?.Length > 0)
             tDeck = new TerrainDeck(5, terrainDeckShuffleIndex);
         else
             tDeck = new TerrainDeck(5);
@@ -438,7 +443,9 @@ public class GameController : MonoBehaviour
         InitTerrain(playerTerrains, true);
         InitTerrain(aiTerrains, false);
 
-        if (isMulti)
+        if (handTopDeckCards != null)
+            pDeck = new PlayDeck(5, handTopDeckCards);
+        else if (playDeckShuffleIndex?.Length > 0)
             pDeck = new PlayDeck(5, playDeckShuffleIndex);
         else
             pDeck = new PlayDeck(5);
@@ -611,7 +618,7 @@ public class GameController : MonoBehaviour
             {
                 card.name = "PlayerTerrain" + (i + 1);
                 card.MoveToPosition(new Vector3(-2 + 2 * i, -2.5f, 1));
-                card.FaceDown = true;
+                card.FaceDown = !terrain.Cards[i].IsRevealed;
                 card.VisibleToPlayer = true;
                 playerTerrainsGraphics.Add(card);
             }
@@ -619,7 +626,7 @@ public class GameController : MonoBehaviour
             {
                 card.name = "AITerrain" + (i + 1);
                 card.MoveToPosition(new Vector3(-2 + 2 * i, 2.5f, 1));
-                card.FaceDown = true;
+                card.FaceDown = !terrain.Cards[i].IsRevealed;
                 card.VisibleToPlayer = false;
                 card.CardSelected = RevealACard;
                 aiTerrainsGraphics.Add(card);
@@ -652,11 +659,18 @@ public class GameController : MonoBehaviour
         if (turnCounter < turnsInCurrentRound - 1)
         {
             //make aiArea and aiTerrain selectable
-            foreach (var cardGraphic in aiAreaGraphics)
-                cardGraphic.Selectable = true;
+            for (int j = 0; j < aiArea.Cards.Count; j++)
+            {
+                if (aiArea.Cards[j].IsRevealed == false)
+                    aiAreaGraphics[j].Selectable = true;
 
-            foreach (var cardGraphic in aiTerrainsGraphics)
-                cardGraphic.Selectable = true;
+            }
+
+            for (int j = 0; j < aiTerrains.Cards.Count; j++)
+            {
+                if (aiTerrains.Cards[j].IsRevealed == false)
+                    aiTerrainsGraphics[j].Selectable = true;
+            }
 
             var commandDisplayText = commandDisplay.GetComponent<Text>();
             commandDisplayText.text = "Select opponent card to reveal";
